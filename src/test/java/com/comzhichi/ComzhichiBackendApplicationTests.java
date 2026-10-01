@@ -1,4 +1,4 @@
-package com.comzhichi.comzhichibackend;
+package com.comzhichi;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
