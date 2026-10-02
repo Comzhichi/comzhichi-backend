@@ -20,6 +20,9 @@ public class Student {
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
+    @Column(name = "full_name", length = 120)
+    private String fullName; // <--- Añadir este atributo
+
     @Column(length = 50)
     private String level;
 
