@@ -17,14 +17,17 @@ public class User {
     private Long id;
 
     @Column(nullable = false, unique = true)
+    private String name;
+
+    @Column(nullable = false, unique = true)
     private String email;
 
     @Column(nullable = false)
     private String password;
 
-    @Column(nullable = false)
-    private boolean enabled = true;
+    private Boolean enabled = true;
 
-    @Column(nullable = false)
-    private String role;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 50)
+    private Role role;
 }
