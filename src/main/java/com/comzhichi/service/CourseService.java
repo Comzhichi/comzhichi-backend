@@ -23,10 +23,16 @@ public class CourseService {
     private final CourseMapper courseMapper;
 
     @Transactional(readOnly = true)
-    public List<CourseResponseDTO> findAll(String name) {
-        List<Course> courses = (name == null || name.isBlank())
-                ? courseRepository.findAll()
-                : courseRepository.findByNameContainingIgnoreCase(name);
+    public List<CourseResponseDTO> findAll(String name, String level) {
+        List<Course> courses;
+
+        if (level != null && !level.isBlank()) {
+            courses = courseRepository.findByLevelContainingIgnoreCase(level);
+        } else if (name != null && !name.isBlank()) {
+            courses = courseRepository.findByNameContainingIgnoreCase(name);
+        } else {
+            courses = courseRepository.findAll();
+        }
 
         return courses.stream()
                 .map(courseMapper::toResponse)

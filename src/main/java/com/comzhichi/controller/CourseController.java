@@ -18,8 +18,10 @@ public class CourseController {
     private final CourseService courseService;
 
     @GetMapping
-    public List<CourseResponseDTO> findAll(@RequestParam(required = false) String name) {
-        return courseService.findAll(name);
+    public List<CourseResponseDTO> findAll(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String level) {
+        return courseService.findAll(name, level);
     }
 
     @GetMapping("/{id}")
