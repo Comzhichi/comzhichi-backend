@@ -36,7 +36,13 @@ public class EnrollmentService {
                 .map(enrollmentMapper::toResponse)
                 .toList();
     }
-
+    @Transactional(readOnly = true)
+    public List<EnrollmentResponseDTO> findBySectionId(Long sectionId) {
+        return enrollmentRepository.findBySectionId(sectionId)
+                .stream()
+                .map(enrollmentMapper::toResponse)
+                .toList();
+    }
     @Transactional(readOnly = true)
     public EnrollmentResponseDTO findById(Long id) {
         Enrollment enrollment = enrollmentRepository.findById(id)
