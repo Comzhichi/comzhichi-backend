@@ -26,10 +26,16 @@ public class SectionService {
     private final SectionMapper sectionMapper;
 
     @Transactional(readOnly = true)
-    public List<SectionResponseDTO> findAll(Long courseId) {
-        List<Section> sections = (courseId == null)
-                ? sectionRepository.findAll()
-                : sectionRepository.findByCourseId(courseId);
+    public List<SectionResponseDTO> findAll(Long courseId, Boolean available) {
+        List<Section> sections;
+
+        if (Boolean.TRUE.equals(available)) {
+            sections = sectionRepository.findByAvailableVacanciesGreaterThan(0);
+        } else if (courseId != null) {
+            sections = sectionRepository.findByCourseId(courseId);
+        } else {
+            sections = sectionRepository.findAll();
+        }
 
         return sections.stream()
                 .map(sectionMapper::toResponse)

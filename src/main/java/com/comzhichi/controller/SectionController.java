@@ -18,8 +18,10 @@ public class SectionController {
     private final SectionService sectionService;
 
     @GetMapping
-    public List<SectionResponseDTO> findAll(@RequestParam(required = false) Long courseId) {
-        return sectionService.findAll(courseId);
+    public List<SectionResponseDTO> findAll(
+            @RequestParam(required = false) Long courseId,
+            @RequestParam(required = false) Boolean available) {
+        return sectionService.findAll(courseId, available);
     }
 
     @GetMapping("/{id}")
