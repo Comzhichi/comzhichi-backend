@@ -7,12 +7,14 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/coordinators")
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('COORDINATOR')")
 public class CoordinatorController {
 
     private final CoordinatorService coordinatorService;

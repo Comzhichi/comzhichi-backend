@@ -8,11 +8,14 @@ import com.comzhichi.model.Coordinator;
 import com.comzhichi.model.Course;
 import com.comzhichi.repository.CoordinatorRepository;
 import com.comzhichi.repository.CourseRepository;
+import com.comzhichi.repository.SectionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Set;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -20,18 +23,51 @@ public class CourseService {
 
     private final CourseRepository courseRepository;
     private final CoordinatorRepository coordinatorRepository;
+    private final SectionRepository sectionRepository;
     private final CourseMapper courseMapper;
 
     @Transactional(readOnly = true)
     public List<CourseResponseDTO> findAll(String name, String level) {
+        return findAll(name, level, null, null);
+    }
+
+    public List<CourseResponseDTO> findAll(String name) {
+        return findAll(name, null, null, null);
+    }
+
+    @Transactional(readOnly = true)
+    public List<CourseResponseDTO> findAll(
+            String name, String level, String schedule, Boolean available) {
         List<Course> courses;
 
-        if (level != null && !level.isBlank()) {
-            courses = courseRepository.findByLevelContainingIgnoreCase(level);
-        } else if (name != null && !name.isBlank()) {
+        if (name != null && !name.isBlank() && (level == null || level.isBlank())) {
             courses = courseRepository.findByNameContainingIgnoreCase(name);
+        } else if (level != null && !level.isBlank() && (name == null || name.isBlank())) {
+            courses = courseRepository.findByLevelContainingIgnoreCase(level);
         } else {
             courses = courseRepository.findAll();
+        }
+
+        if (name != null && !name.isBlank()
+                && (level != null && !level.isBlank())) {
+            courses = courses.stream()
+                    .filter(course -> course.getName().toLowerCase().contains(name.toLowerCase()))
+                    .filter(course -> course.getLevel().toLowerCase().contains(level.toLowerCase()))
+                    .toList();
+        }
+
+        if ((schedule != null && !schedule.isBlank()) || Boolean.TRUE.equals(available)) {
+            String normalizedSchedule = schedule == null ? null : schedule.toLowerCase();
+            Set<Long> matchingCourseIds = sectionRepository.findAll().stream()
+                    .filter(section -> normalizedSchedule == null
+                            || section.getSchedule().toLowerCase().contains(normalizedSchedule))
+                    .filter(section -> !Boolean.TRUE.equals(available)
+                            || section.getAvailableVacancies() > 0)
+                    .map(section -> section.getCourse().getId())
+                    .collect(Collectors.toSet());
+            courses = courses.stream()
+                    .filter(course -> matchingCourseIds.contains(course.getId()))
+                    .toList();
         }
 
         return courses.stream()
