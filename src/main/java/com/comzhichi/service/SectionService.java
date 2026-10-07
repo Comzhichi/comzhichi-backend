@@ -26,12 +26,14 @@ public class SectionService {
     private final SectionMapper sectionMapper;
 
     @Transactional(readOnly = true)
-    public List<SectionResponseDTO> findAll(Long courseId) {
-        List<Section> sections = (courseId == null)
-                ? sectionRepository.findAll()
-                : sectionRepository.findByCourseId(courseId);
-
-        return sections.stream()
+    public List<SectionResponseDTO> findAll(Long courseId, Boolean available, String schedule) {
+        return sectionRepository.findAll().stream()
+                .filter(section -> courseId == null
+                        || section.getCourse().getId().equals(courseId))
+                .filter(section -> !Boolean.TRUE.equals(available)
+                        || section.getAvailableVacancies() > 0)
+                .filter(section -> schedule == null || schedule.isBlank()
+                        || section.getSchedule().toLowerCase().contains(schedule.toLowerCase()))
                 .map(sectionMapper::toResponse)
                 .toList();
     }
