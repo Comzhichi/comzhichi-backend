@@ -18,7 +18,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
+import com.comzhichi.config.CurrentUser;
+import com.comzhichi.config.CurrentUser;
+import org.springframework.security.core.context.SecurityContextHolder;
+import com.comzhichi.config.CurrentUser;
+import org.springframework.security.core.context.SecurityContextHolder;
 @Service
 @RequiredArgsConstructor
 public class EnrollmentService {
@@ -54,9 +58,23 @@ public class EnrollmentService {
 
     @Transactional
     public EnrollmentResponseDTO create(EnrollmentRequestDTO dto) {
-        Student student = studentRepository.findById(dto.studentId())
-                .orElseThrow(() -> new ResourceNotFoundException("Estudiante no encontrado con ID: " + dto.studentId()));
+        Student student;
 
+        boolean isStudent = SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getAuthorities()
+                .stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_STUDENT"));
+
+        if (isStudent) {
+            student = studentRepository.findByUser_Id(CurrentUser.getUserId())
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "No se encontró un estudiante asociado al usuario autenticado"));
+        } else {
+            student = studentRepository.findById(dto.studentId())
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Estudiante no encontrado con ID: " + dto.studentId()));
+        }
         Section section = sectionRepository.findById(dto.sectionId())
                 .orElseThrow(() -> new ResourceNotFoundException("Sección no encontrada con ID: " + dto.sectionId()));
 

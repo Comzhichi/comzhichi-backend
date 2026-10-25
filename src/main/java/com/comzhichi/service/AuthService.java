@@ -3,7 +3,9 @@ package com.comzhichi.service;
 import com.comzhichi.dto.request.LoginRequestDTO;
 import com.comzhichi.dto.request.UserRequestDTO;
 import com.comzhichi.dto.response.AuthResponseDTO;
+import com.comzhichi.dto.response.LoginResponseDTO;
 import com.comzhichi.exception.BusinessRuleException;
+import com.comzhichi.exception.InvalidCredentialsException;
 import com.comzhichi.mapper.UserMapper;
 import com.comzhichi.model.Role;
 import com.comzhichi.model.Student;
@@ -36,6 +38,7 @@ public class AuthService {
         if (userRepo.findByEmail(dto.email()).isPresent()) {
             throw new BusinessRuleException("El correo ya está registrado");
         }
+
         if (userRepo.findByName(dto.name()).isPresent()) {
             throw new BusinessRuleException("El nombre ya está en uso");
         }
@@ -46,23 +49,43 @@ public class AuthService {
         user.setPassword(encoder.encode(dto.password()));
         user.setEnabled(true);
         user.setRole(Role.STUDENT);
+
         userRepo.save(user);
 
         Student student = new Student();
         student.setUser(user);
         student.setFullName(dto.fullName());
+
         studentRepo.save(student);
 
-        String token = jwt.generateToken(new UserPrincipal(user));
-        return new AuthResponseDTO(token, "Bearer", userMapper.toResponse(user));
+        String token = jwt.generate(user);
+
+        return new AuthResponseDTO(
+                token,
+                "Bearer",
+                userMapper.toResponse(user)
+        );
     }
 
-    public AuthResponseDTO login(LoginRequestDTO dto) {
-        Authentication authentication = authManager.authenticate(
-                new UsernamePasswordAuthenticationToken(dto.name(), dto.password()));
+    public LoginResponseDTO login(LoginRequestDTO dto) {
 
-        UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
-        String token = jwt.generateToken(principal);
-        return new AuthResponseDTO(token, "Bearer", userMapper.toResponse(principal.getUser()));
+        String email = dto.email().trim().toLowerCase();
+
+        User user = userRepo.findByEmail(email)
+                .filter(u -> encoder.matches(
+                        dto.password(),
+                        u.getPassword()
+                ))
+                .orElseThrow(InvalidCredentialsException::new);
+
+        String token = jwt.generate(user);
+
+        return new LoginResponseDTO(
+                token,
+                "Bearer",
+                jwt.expiresInSeconds(),
+                user.getRole().name()
+        );
+
     }
 }
