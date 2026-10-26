@@ -1,5 +1,6 @@
 package com.comzhichi.security;
 
+import com.comzhichi.model.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -21,14 +22,20 @@ public class JwtService {
     private long expirationMs;
 
     private SecretKey getKey() {
-        return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        return Keys.hmacShaKeyFor(
+                secret.getBytes(StandardCharsets.UTF_8)
+        );
     }
 
-    public String generateToken(UserDetails userDetails) {
+    public String generate(User user) {
+        Date now = new Date();
+        Date expiration = new Date(now.getTime() + expirationMs);
+
         return Jwts.builder()
-                .subject(userDetails.getUsername())
-                .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + expirationMs))
+                .subject(String.valueOf(user.getId()))
+                .claim("role", user.getRole().name())
+                .issuedAt(now)
+                .expiration(expiration)
                 .signWith(getKey())
                 .compact();
     }
@@ -37,13 +44,24 @@ public class JwtService {
         return parseClaims(token).getSubject();
     }
 
-    public boolean isTokenValid(String token, UserDetails userDetails) {
-        String username = extractUsername(token);
-        return username.equals(userDetails.getUsername()) && !isExpired(token);
+    public Long extractUserId(String token) {
+        return Long.valueOf(parseClaims(token).getSubject());
     }
 
-    private boolean isExpired(String token) {
-        return parseClaims(token).getExpiration().before(new Date());
+    public String extractRole(String token) {
+        return parseClaims(token).get("role", String.class);
+    }
+
+    public boolean isTokenValid(String token, UserDetails userDetails) {
+        Claims claims = parseClaims(token);
+
+        if (!(userDetails instanceof UserPrincipal principal)) {
+            return false;
+        }
+
+        return claims.getSubject().equals(
+                String.valueOf(principal.getUser().getId())
+        ) && claims.getExpiration().after(new Date());
     }
 
     private Claims parseClaims(String token) {
@@ -52,5 +70,9 @@ public class JwtService {
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
+    }
+
+    public long expiresInSeconds() {
+        return expirationMs / 1000;
     }
 }

@@ -52,7 +52,7 @@ public class EnrollmentService {
     @Transactional
     public EnrollmentResponseDTO create(EnrollmentRequestDTO dto) {
         Student student = studentRepository.findById(dto.studentId())
-                .orElseThrow(() -> new ResourceNotFoundException("Estudiante no encontrado con ID: " + dto.studentId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Estudiante no encontrado con ID: " + dto.studentId()));;
 
         Section newSection = sectionRepository.findById(dto.sectionId())
                 .orElseThrow(() -> new ResourceNotFoundException("Sección no encontrada con ID: " + dto.sectionId()));

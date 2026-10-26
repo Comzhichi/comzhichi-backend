@@ -3,7 +3,9 @@ package com.comzhichi.service;
 import com.comzhichi.dto.request.LoginRequestDTO;
 import com.comzhichi.dto.request.UserRequestDTO;
 import com.comzhichi.dto.response.AuthResponseDTO;
+import com.comzhichi.dto.response.LoginResponseDTO;
 import com.comzhichi.exception.BusinessRuleException;
+import com.comzhichi.exception.InvalidCredentialsException;
 import com.comzhichi.mapper.UserMapper;
 import com.comzhichi.model.*;
 import com.comzhichi.repository.*;
@@ -70,14 +72,19 @@ public class AuthService {
             }
         }
 
-        String token = jwt.generateToken(new UserPrincipal(user));
-        return new AuthResponseDTO(token, "Bearer", userMapper.toResponse(user));
+        String token = jwt.generate(user);
+
+        return new AuthResponseDTO(
+                token,
+                "Bearer",
+                userMapper.toResponse(user)
+        );
     }
 
     public AuthResponseDTO login(LoginRequestDTO dto) {
         Authentication authentication = authManager.authenticate(
                 new UsernamePasswordAuthenticationToken(dto.email(), dto.password()));
-
+      
         UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
         String token = jwt.generateToken(principal);
         return new AuthResponseDTO(token, "Bearer", userMapper.toResponse(principal.getUser()));

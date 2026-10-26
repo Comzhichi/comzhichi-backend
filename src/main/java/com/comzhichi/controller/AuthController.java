@@ -3,10 +3,12 @@ package com.comzhichi.controller;
 import com.comzhichi.dto.request.LoginRequestDTO;
 import com.comzhichi.dto.request.UserRequestDTO;
 import com.comzhichi.dto.response.AuthResponseDTO;
+import com.comzhichi.dto.response.LoginResponseDTO;
 import com.comzhichi.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -17,13 +19,18 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/register")
-    @ResponseStatus(HttpStatus.CREATED)
-    public AuthResponseDTO register(@Valid @RequestBody UserRequestDTO dto) {
-        return authService.register(dto);
+    public ResponseEntity<AuthResponseDTO> register(
+            @Valid @RequestBody UserRequestDTO dto) {
+
+        AuthResponseDTO response = authService.register(dto);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PostMapping("/login")
-    public AuthResponseDTO login(@Valid @RequestBody LoginRequestDTO dto) {
-        return authService.login(dto);
+    public ResponseEntity<LoginResponseDTO> login(
+            @Valid @RequestBody LoginRequestDTO dto) {
+
+        return ResponseEntity.ok(authService.login(dto));
     }
 }
