@@ -3,11 +3,13 @@ spring:
     name: comzhichi-backend-develop
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/db_comzhichi
-    username: postgres
-    password: adminadmin
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://aws-0-us-east-1.pooler.supabase.com:5432/postgres
+    username: postgres.kslokrehwebouzuljdti
+    password: comzhichiadmin
 
   jpa:
+    database: postgresql
     hibernate:
       ddl-auto: update
     show-sql: true
@@ -27,3 +29,7 @@ springdoc:
     path: /v3/api-docs
   swagger-ui:
     path: /swagger-ui.html
+
+app:
+  cors:
+    allowed-origins: "http://localhost:4200"
