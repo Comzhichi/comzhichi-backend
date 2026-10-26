@@ -2,12 +2,14 @@ package com.comzhichi.controller;
 
 import com.comzhichi.dto.request.ParentRequestDTO;
 import com.comzhichi.dto.response.ParentResponseDTO;
+import com.comzhichi.security.UserPrincipal;
 import com.comzhichi.service.ParentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 import java.util.List;
 
@@ -27,6 +29,12 @@ public class ParentController {
     @GetMapping("/{id}")
     public ParentResponseDTO findById(@PathVariable Long id) {
         return parentService.findById(id);
+    }
+
+    @GetMapping("/me")
+    @PreAuthorize("hasRole('PARENT')")
+    public ParentResponseDTO me(@AuthenticationPrincipal UserPrincipal principal) {
+        return parentService.findByUserId(principal.getUser().getId());
     }
 
     @PostMapping

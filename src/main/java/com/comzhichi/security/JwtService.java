@@ -14,11 +14,11 @@ import java.util.Date;
 @Service
 public class JwtService {
 
-    @Value("${jwt.secret}")
+    @Value("${app.security.jwt-secret}")
     private String secret;
 
-    @Value("${jwt.expiration-ms}")
-    private long expirationMs;
+    @Value("${app.security.jwt-expiration-minutes}")
+    private long expirationMinutes;
 
     private SecretKey getKey() {
         return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
@@ -28,7 +28,7 @@ public class JwtService {
         return Jwts.builder()
                 .subject(userDetails.getUsername())
                 .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + expirationMs))
+                .expiration(new Date(System.currentTimeMillis() + expirationMinutes*60_000))
                 .signWith(getKey())
                 .compact();
     }

@@ -71,7 +71,7 @@ public class AuthService {
         }
 
         String token = jwt.generateToken(new UserPrincipal(user));
-        return new AuthResponseDTO(token, "Bearer", userMapper.toResponse(user));
+        return new AuthResponseDTO(token, "Bearer", userMapper.toResponse(user), profileIdOf(user));
     }
 
     public AuthResponseDTO login(LoginRequestDTO dto) {
@@ -80,6 +80,15 @@ public class AuthService {
 
         UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
         String token = jwt.generateToken(principal);
-        return new AuthResponseDTO(token, "Bearer", userMapper.toResponse(principal.getUser()));
+        return new AuthResponseDTO(token, "Bearer", userMapper.toResponse(principal.getUser()), profileIdOf(principal.getUser()));
+    }
+
+    private Long profileIdOf(User user) {
+        return switch (user.getRole()) {
+            case STUDENT -> studentRepo.findByUser_Id(user.getId()).map(Student::getId).orElse(null);
+            case TEACHER -> teacherRepo.findByUser_Id(user.getId()).map(Teacher::getId).orElse(null);
+            case COORDINATOR -> coordinatorRepo.findByUser_Id(user.getId()).map(Coordinator::getId).orElse(null);
+            case PARENT -> parentRepo.findByUser_Id(user.getId()).map(Parent::getId).orElse(null);
+        };
     }
 }

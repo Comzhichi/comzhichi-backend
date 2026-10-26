@@ -2,8 +2,11 @@ package com.comzhichi.service;
 
 import com.comzhichi.dto.request.TeacherRequestDTO;
 import com.comzhichi.dto.response.TeacherResponseDTO;
+import com.comzhichi.exception.BusinessRuleException;
+import com.comzhichi.exception.ConflictException;
 import com.comzhichi.exception.ResourceNotFoundException;
 import com.comzhichi.mapper.TeacherMapper;
+import com.comzhichi.model.Role;
 import com.comzhichi.model.Teacher;
 import com.comzhichi.model.User;
 import com.comzhichi.repository.TeacherRepository;
@@ -42,9 +45,21 @@ public class TeacherService {
         User user = userRepository.findById(dto.userId())
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con ID: " + dto.userId()));
 
+        if (user.getRole() != Role.TEACHER)
+            throw new BusinessRuleException("El usuario no tiene rol TEACHER");
+        if (teacherRepository.existsByUser_Id(user.getId()))
+            throw new ConflictException("El usuario ya tiene un perfil de docente");
+
         Teacher teacher = teacherMapper.toEntity(dto);
         teacher.setUser(user);
         return teacherMapper.toResponse(teacherRepository.save(teacher));
+    }
+
+    @Transactional(readOnly = true)
+    public TeacherResponseDTO findByUserId(Long userId) {
+        return teacherRepository.findByUser_Id(userId)
+                .map(teacherMapper::toResponse)
+                .orElseThrow(() -> new ResourceNotFoundException("Perfil de docente no encontrado para el usuario: " + userId));
     }
 
     @Transactional

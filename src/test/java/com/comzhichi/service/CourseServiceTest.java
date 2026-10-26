@@ -46,7 +46,7 @@ class CourseServiceTest {
         when(courseRepository.findAll()).thenReturn(List.of(course));
         when(courseMapper.toResponse(course)).thenReturn(response);
 
-        List<CourseResponseDTO> result = courseService.findAll(null);
+        List<CourseResponseDTO> result = courseService.findAll(null, null, null);
 
         assertEquals(List.of(response), result);
         verify(courseRepository).findAll();
@@ -59,15 +59,13 @@ class CourseServiceTest {
         Course course = createCourse(1L, "Inglés", "Básico");
         CourseResponseDTO response = createResponse(course);
 
-        when(courseRepository.findByNameContainingIgnoreCase("inglés"))
-                .thenReturn(List.of(course));
+        when(courseRepository.findAll()).thenReturn(List.of(course));
         when(courseMapper.toResponse(course)).thenReturn(response);
 
-        List<CourseResponseDTO> result = courseService.findAll("inglés");
+        List<CourseResponseDTO> result = courseService.findAll("inglés", null, null);
 
         assertEquals(List.of(response), result);
-        verify(courseRepository)
-                .findByNameContainingIgnoreCase("inglés");
+        verify(courseRepository).findAll();
     }
 
     @Test
@@ -102,6 +100,8 @@ class CourseServiceTest {
                 "Inglés",
                 "Básico",
                 "Curso inicial",
+                null,
+                null,
                 null
         );
 
@@ -128,7 +128,9 @@ class CourseServiceTest {
                 "Inglés",
                 "Básico",
                 "Curso inicial",
-                10L
+                null,
+                10L,
+                null
         );
 
         Course course = createCourse(1L, "Inglés", "Básico");
@@ -157,7 +159,9 @@ class CourseServiceTest {
                 "Inglés",
                 "Básico",
                 "Curso inicial",
-                10L
+                null,
+                10L,
+                null
         );
 
         Course course = createCourse(1L, "Inglés", "Básico");
@@ -208,8 +212,11 @@ class CourseServiceTest {
         return new CourseResponseDTO(
                 course.getId(),
                 course.getName(),
+                course.getLanguage(),
                 course.getLevel(),
                 course.getDescription(),
+                null,
+                null,
                 null,
                 null
         );

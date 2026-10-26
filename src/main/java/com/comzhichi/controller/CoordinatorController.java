@@ -2,12 +2,14 @@ package com.comzhichi.controller;
 
 import com.comzhichi.dto.request.CoordinatorRequestDTO;
 import com.comzhichi.dto.response.CoordinatorResponseDTO;
+import com.comzhichi.security.UserPrincipal;
 import com.comzhichi.service.CoordinatorService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 import java.util.List;
 
@@ -27,6 +29,11 @@ public class CoordinatorController {
     @GetMapping("/{id}")
     public CoordinatorResponseDTO findById(@PathVariable Long id) {
         return coordinatorService.findById(id);
+    }
+
+    @GetMapping("/me")
+    public CoordinatorResponseDTO me(@AuthenticationPrincipal UserPrincipal principal) {
+        return coordinatorService.findByUserId(principal.getUser().getId());
     }
 
     @PostMapping

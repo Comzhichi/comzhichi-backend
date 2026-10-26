@@ -2,12 +2,14 @@ package com.comzhichi.controller;
 
 import com.comzhichi.dto.request.TeacherRequestDTO;
 import com.comzhichi.dto.response.TeacherResponseDTO;
+import com.comzhichi.security.UserPrincipal;
 import com.comzhichi.service.TeacherService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 import java.util.List;
 
@@ -27,6 +29,12 @@ public class TeacherController {
     @GetMapping("/{id}")
     public TeacherResponseDTO findById(@PathVariable Long id) {
         return teacherService.findById(id);
+    }
+
+    @GetMapping("/me")
+    @PreAuthorize("hasRole('TEACHER')")
+    public TeacherResponseDTO me(@AuthenticationPrincipal UserPrincipal principal) {
+        return teacherService.findByUserId(principal.getUser().getId());
     }
 
     @PostMapping

@@ -4,7 +4,9 @@ import com.comzhichi.dto.request.EnrollmentRequestDTO;
 import com.comzhichi.dto.response.EnrollmentResponseDTO;
 import com.comzhichi.exception.BusinessRuleException;
 import com.comzhichi.exception.ResourceNotFoundException;
+import com.comzhichi.config.CurrentUser;
 import com.comzhichi.mapper.EnrollmentMapper;
+import com.comzhichi.security.UserPrincipal;
 import com.comzhichi.model.*;
 import com.comzhichi.repository.EnrollmentRepository;
 import com.comzhichi.repository.SectionRepository;
@@ -51,8 +53,20 @@ public class EnrollmentService {
 
     @Transactional
     public EnrollmentResponseDTO create(EnrollmentRequestDTO dto) {
-        Student student = studentRepository.findById(dto.studentId())
-                .orElseThrow(() -> new ResourceNotFoundException("Estudiante no encontrado con ID: " + dto.studentId()));
+        // Si el usuario autenticado es un ESTUDIANTE, la matrícula se hace
+        // para sí mismo: se ignora el studentId del body (evita suplantación).
+        Long effectiveStudentId = dto.studentId();
+        UserPrincipal principal = CurrentUser.getPrincipal();
+        if (principal != null && principal.getUser().getRole() == Role.STUDENT) {
+            Student self = studentRepository.findByUser_Id(principal.getUser().getId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Perfil de estudiante no encontrado para el usuario autenticado"));
+            effectiveStudentId = self.getId();
+        }
+
+        final Long studentIdToUse = effectiveStudentId;
+
+        Student student = studentRepository.findById(studentIdToUse)
+                .orElseThrow(() -> new ResourceNotFoundException("Estudiante no encontrado con ID: " + studentIdToUse));
 
         Section newSection = sectionRepository.findById(dto.sectionId())
                 .orElseThrow(() -> new ResourceNotFoundException("Sección no encontrada con ID: " + dto.sectionId()));
