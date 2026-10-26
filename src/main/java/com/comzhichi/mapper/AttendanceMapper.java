@@ -10,6 +10,7 @@ import org.mapstruct.Mapping;
 public interface AttendanceMapper {
 
     @Mapping(target = "enrollmentId", source = "enrollment.id")
+    @Mapping(target = "studentFullName", source = "enrollment.student.user.fullName")
     AttendanceResponseDTO toResponse(Attendance attendance);
 
     @Mapping(target = "id", ignore = true)

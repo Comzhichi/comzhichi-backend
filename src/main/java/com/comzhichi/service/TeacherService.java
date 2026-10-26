@@ -27,10 +27,7 @@ public class TeacherService {
         List<Teacher> teachers = (specialty == null || specialty.isBlank())
                 ? teacherRepository.findAll()
                 : teacherRepository.findBySpecialtyContainingIgnoreCase(specialty);
-
-        return teachers.stream()
-                .map(teacherMapper::toResponse)
-                .toList();
+        return teachers.stream().map(teacherMapper::toResponse).toList();
     }
 
     @Transactional(readOnly = true)
@@ -42,21 +39,18 @@ public class TeacherService {
 
     @Transactional
     public TeacherResponseDTO create(TeacherRequestDTO dto) {
-        // Buscamos el usuario asociado o lanzamos excepción
         User user = userRepository.findById(dto.userId())
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + dto.userId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con ID: " + dto.userId()));
 
         Teacher teacher = teacherMapper.toEntity(dto);
         teacher.setUser(user);
-
         return teacherMapper.toResponse(teacherRepository.save(teacher));
     }
 
     @Transactional
     public TeacherResponseDTO update(Long id, TeacherRequestDTO dto) {
         Teacher teacher = teacherRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Docente no encontrado con ID: " + id));
-
+                .orElseThrow(() -> new ResourceNotFoundException("Docente no encontrado con ID: " + id));
         teacher.setSpecialty(dto.specialty());
         return teacherMapper.toResponse(teacherRepository.save(teacher));
     }
@@ -64,7 +58,7 @@ public class TeacherService {
     @Transactional
     public void delete(Long id) {
         Teacher teacher = teacherRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Docente no encontrado con ID: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Docente no encontrado con ID: " + id));
         teacherRepository.delete(teacher);
     }
 }

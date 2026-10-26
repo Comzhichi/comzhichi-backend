@@ -3,7 +3,9 @@ package com.comzhichi.dto.response;
 public record SectionResponseDTO(
         Long id,
         String groupCode,
-        String schedule,
+        String dayOfWeek,
+        String startTime,
+        String endTime,
         String classroom,
         Integer totalVacancies,
         Integer availableVacancies,

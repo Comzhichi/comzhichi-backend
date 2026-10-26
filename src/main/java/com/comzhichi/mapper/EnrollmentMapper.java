@@ -10,6 +10,7 @@ import org.mapstruct.Mapping;
 public interface EnrollmentMapper {
 
     @Mapping(target = "studentId", source = "student.id")
+    @Mapping(target = "studentFullName", source = "student.user.fullName")
     @Mapping(target = "studentEmail", source = "student.user.email")
     @Mapping(target = "sectionId", source = "section.id")
     @Mapping(target = "sectionGroupCode", source = "section.groupCode")

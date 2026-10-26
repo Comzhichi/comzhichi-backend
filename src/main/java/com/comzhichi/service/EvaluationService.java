@@ -27,7 +27,6 @@ public class EvaluationService {
         List<Evaluation> list = (enrollmentId == null)
                 ? evaluationRepository.findAll()
                 : evaluationRepository.findByEnrollmentId(enrollmentId);
-
         return list.stream().map(evaluationMapper::toResponse).toList();
     }
 
@@ -45,7 +44,6 @@ public class EvaluationService {
 
         Evaluation eval = evaluationMapper.toEntity(dto);
         eval.setEnrollment(enrollment);
-
         return evaluationMapper.toResponse(evaluationRepository.save(eval));
     }
 
@@ -54,9 +52,10 @@ public class EvaluationService {
         Evaluation eval = evaluationRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Evaluación no encontrada con ID: " + id));
 
+        eval.setType(dto.type());
+        eval.setDate(dto.date());
         eval.setScore(dto.score());
         eval.setFeedback(dto.feedback());
-
         return evaluationMapper.toResponse(evaluationRepository.save(eval));
     }
 

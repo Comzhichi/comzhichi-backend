@@ -4,7 +4,7 @@ import com.comzhichi.model.Role;
 
 public record UserResponseDTO(
         Long id,
-        String name,
+        String fullName,
         String email,
         Role role,
         Boolean enabled

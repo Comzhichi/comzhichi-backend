@@ -6,8 +6,8 @@ import com.comzhichi.service.CourseService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -22,10 +22,9 @@ public class CourseController {
     @GetMapping
     public List<CourseResponseDTO> findAll(
             @RequestParam(required = false) String name,
-            @RequestParam(required = false) String level,
-            @RequestParam(required = false) String schedule,
-            @RequestParam(required = false) Boolean available) {
-        return courseService.findAll(name, level, schedule, available);
+            @RequestParam(required = false) String language,
+            @RequestParam(required = false) String level) {
+        return courseService.findAll(name, language, level);
     }
 
     @GetMapping("/{id}")

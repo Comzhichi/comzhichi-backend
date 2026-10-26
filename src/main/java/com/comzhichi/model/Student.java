@@ -7,9 +7,7 @@ import lombok.Setter;
 
 @Entity
 @Table(name = "students")
-@Getter
-@Setter
-@NoArgsConstructor
+@Getter @Setter @NoArgsConstructor
 public class Student {
 
     @Id
@@ -19,13 +17,4 @@ public class Student {
     @OneToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
-
-    @Column(name = "full_name", length = 120)
-    private String fullName; // <--- Añadir este atributo
-
-    @Column(length = 50)
-    private String level;
-
-    @Column(length = 100)
-    private String institution;
 }

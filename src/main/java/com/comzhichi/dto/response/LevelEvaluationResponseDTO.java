@@ -1,7 +1,15 @@
 package com.comzhichi.dto.response;
 
+import com.comzhichi.model.LevelEvaluationResult;
 import java.time.LocalDate;
 
 public record LevelEvaluationResponseDTO(
-        Long id, Long studentId, Long courseId, LocalDate date, String result
+        Long id,
+        Long enrollmentId,
+        String studentFullName,
+        String courseName,
+        String language,
+        LocalDate date,
+        LevelEvaluationResult result,
+        String comments
 ) {}

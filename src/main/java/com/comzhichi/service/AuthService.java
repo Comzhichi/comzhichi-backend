@@ -5,11 +5,8 @@ import com.comzhichi.dto.request.UserRequestDTO;
 import com.comzhichi.dto.response.AuthResponseDTO;
 import com.comzhichi.exception.BusinessRuleException;
 import com.comzhichi.mapper.UserMapper;
-import com.comzhichi.model.Role;
-import com.comzhichi.model.Student;
-import com.comzhichi.model.User;
-import com.comzhichi.repository.StudentRepository;
-import com.comzhichi.repository.UserRepository;
+import com.comzhichi.model.*;
+import com.comzhichi.repository.*;
 import com.comzhichi.security.JwtService;
 import com.comzhichi.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +23,9 @@ public class AuthService {
 
     private final UserRepository userRepo;
     private final StudentRepository studentRepo;
+    private final TeacherRepository teacherRepo;
+    private final CoordinatorRepository coordinatorRepo;
+    private final ParentRepository parentRepo;
     private final PasswordEncoder encoder;
     private final AuthenticationManager authManager;
     private final JwtService jwt;
@@ -33,25 +33,42 @@ public class AuthService {
 
     @Transactional
     public AuthResponseDTO register(UserRequestDTO dto) {
-        if (userRepo.findByEmail(dto.email()).isPresent()) {
+        if (userRepo.findByEmail(dto.email()).isPresent())
             throw new BusinessRuleException("El correo ya está registrado");
-        }
-        if (userRepo.findByName(dto.name()).isPresent()) {
-            throw new BusinessRuleException("El nombre ya está en uso");
-        }
 
         User user = new User();
-        user.setName(dto.name());
+        user.setFullName(dto.fullName());
         user.setEmail(dto.email());
         user.setPassword(encoder.encode(dto.password()));
         user.setEnabled(true);
-        user.setRole(Role.STUDENT);
+        user.setRole(dto.role());
         userRepo.save(user);
 
-        Student student = new Student();
-        student.setUser(user);
-        student.setFullName(dto.fullName());
-        studentRepo.save(student);
+        switch (dto.role()) {
+            case STUDENT -> {
+                Student s = new Student();
+                s.setUser(user);
+                studentRepo.save(s);
+            }
+            case TEACHER -> {
+                Teacher t = new Teacher();
+                t.setUser(user);
+                t.setSpecialty(dto.specialty());
+                teacherRepo.save(t);
+            }
+            case COORDINATOR -> {
+                Coordinator c = new Coordinator();
+                c.setUser(user);
+                c.setDepartment(dto.department());
+                coordinatorRepo.save(c);
+            }
+            case PARENT -> {
+                Parent p = new Parent();
+                p.setUser(user);
+                p.setPhoneContact(dto.phoneContact());
+                parentRepo.save(p);
+            }
+        }
 
         String token = jwt.generateToken(new UserPrincipal(user));
         return new AuthResponseDTO(token, "Bearer", userMapper.toResponse(user));
@@ -59,7 +76,7 @@ public class AuthService {
 
     public AuthResponseDTO login(LoginRequestDTO dto) {
         Authentication authentication = authManager.authenticate(
-                new UsernamePasswordAuthenticationToken(dto.name(), dto.password()));
+                new UsernamePasswordAuthenticationToken(dto.email(), dto.password()));
 
         UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
         String token = jwt.generateToken(principal);

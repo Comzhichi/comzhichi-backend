@@ -23,12 +23,8 @@ public class StudentService {
     private final StudentMapper studentMapper;
 
     @Transactional(readOnly = true)
-    public List<StudentResponseDTO> findAll(String level) {
-        List<Student> students = (level == null || level.isBlank())
-                ? studentRepository.findAll()
-                : studentRepository.findByLevelContainingIgnoreCase(level);
-
-        return students.stream()
+    public List<StudentResponseDTO> findAll() {
+        return studentRepository.findAll().stream()
                 .map(studentMapper::toResponse)
                 .toList();
     }
@@ -48,16 +44,6 @@ public class StudentService {
         Student student = studentMapper.toEntity(dto);
         student.setUser(user);
 
-        return studentMapper.toResponse(studentRepository.save(student));
-    }
-
-    @Transactional
-    public StudentResponseDTO update(Long id, StudentRequestDTO dto) {
-        Student student = studentRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Estudiante no encontrado con ID: " + id));
-
-        student.setLevel(dto.level());
-        student.setInstitution(dto.institution());
         return studentMapper.toResponse(studentRepository.save(student));
     }
 

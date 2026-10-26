@@ -10,8 +10,11 @@ import org.mapstruct.Mapping;
 public interface StudentParentMapper {
 
     @Mapping(target = "studentId", source = "student.id")
+    @Mapping(target = "studentFullName", source = "student.user.fullName")
     @Mapping(target = "studentEmail", source = "student.user.email")
     @Mapping(target = "parentId", source = "parent.id")
+    @Mapping(target = "parentFullName", source = "parent.user.fullName")
+    @Mapping(target = "parentEmail", source = "parent.user.email")
     @Mapping(target = "parentPhoneContact", source = "parent.phoneContact")
     StudentParentResponseDTO toResponse(StudentParent studentParent);
 

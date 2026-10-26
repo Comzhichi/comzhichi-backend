@@ -10,6 +10,7 @@ import org.mapstruct.Mapping;
 public interface EvaluationMapper {
 
     @Mapping(target = "enrollmentId", source = "enrollment.id")
+    @Mapping(target = "studentFullName", source = "enrollment.student.user.fullName")
     EvaluationResponseDTO toResponse(Evaluation evaluation);
 
     @Mapping(target = "id", ignore = true)

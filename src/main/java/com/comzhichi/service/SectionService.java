@@ -26,14 +26,12 @@ public class SectionService {
     private final SectionMapper sectionMapper;
 
     @Transactional(readOnly = true)
-    public List<SectionResponseDTO> findAll(Long courseId, Boolean available, String schedule) {
+    public List<SectionResponseDTO> findAll(Long courseId, Boolean available, String dayOfWeek) {
         return sectionRepository.findAll().stream()
-                .filter(section -> courseId == null
-                        || section.getCourse().getId().equals(courseId))
-                .filter(section -> !Boolean.TRUE.equals(available)
-                        || section.getAvailableVacancies() > 0)
-                .filter(section -> schedule == null || schedule.isBlank()
-                        || section.getSchedule().toLowerCase().contains(schedule.toLowerCase()))
+                .filter(s -> courseId == null || s.getCourse().getId().equals(courseId))
+                .filter(s -> !Boolean.TRUE.equals(available) || s.getAvailableVacancies() > 0)
+                .filter(s -> dayOfWeek == null || dayOfWeek.isBlank()
+                        || s.getDayOfWeek().toLowerCase().contains(dayOfWeek.toLowerCase()))
                 .map(sectionMapper::toResponse)
                 .toList();
     }
@@ -71,19 +69,17 @@ public class SectionService {
                 .orElseThrow(() -> new ResourceNotFoundException("Curso no encontrado con ID: " + dto.courseId()));
 
         section.setGroupCode(dto.groupCode());
-        section.setSchedule(dto.schedule());
+        section.setDayOfWeek(dto.dayOfWeek());
+        section.setStartTime(dto.startTime());
+        section.setEndTime(dto.endTime());
         section.setClassroom(dto.classroom());
         section.setTotalVacancies(dto.totalVacancies());
         section.setAvailableVacancies(dto.availableVacancies());
         section.setCourse(course);
-
-        if (dto.teacherId() != null) {
-            Teacher teacher = teacherRepository.findById(dto.teacherId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Docente no encontrado con ID: " + dto.teacherId()));
-            section.setTeacher(teacher);
-        } else {
-            section.setTeacher(null);
-        }
+        section.setTeacher(dto.teacherId() != null
+                ? teacherRepository.findById(dto.teacherId())
+                .orElseThrow(() -> new ResourceNotFoundException("Docente no encontrado con ID: " + dto.teacherId()))
+                : null);
 
         return sectionMapper.toResponse(sectionRepository.save(section));
     }

@@ -7,22 +7,30 @@ import jakarta.validation.constraints.Size;
 
 public record SectionRequestDTO(
         @NotBlank(message = "El código de grupo es obligatorio")
-        @Size(max = 20, message = "El código de grupo no debe exceder los 20 caracteres")
+        @Size(max = 20)
         String groupCode,
 
-        @NotBlank(message = "El horario es obligatorio")
-        @Size(max = 100, message = "El horario no debe exceder los 100 caracteres")
-        String schedule,
+        @NotBlank(message = "El día de semana es obligatorio")
+        @Size(max = 50)
+        String dayOfWeek,   // ej. "MONDAY,WEDNESDAY"
 
-        @Size(max = 50, message = "El aula no debe exceder los 50 caracteres")
+        @NotBlank(message = "La hora de inicio es obligatoria")
+        @Size(max = 10)
+        String startTime,   // ej. "08:00"
+
+        @NotBlank(message = "La hora de fin es obligatoria")
+        @Size(max = 10)
+        String endTime,     // ej. "10:00"
+
+        @Size(max = 50)
         String classroom,
 
-        @NotNull(message = "El total de vacantes es obligatorio")
-        @Min(value = 1, message = "Debe haber al menos 1 vacante")
+        @NotNull
+        @Min(value = 1)
         Integer totalVacancies,
 
-        @NotNull(message = "Las vacantes disponibles son obligatorias")
-        @Min(value = 0, message = "Las vacantes disponibles no pueden ser negativas")
+        @NotNull
+        @Min(value = 0)
         Integer availableVacancies,
 
         @NotNull(message = "El ID del curso es obligatorio")
