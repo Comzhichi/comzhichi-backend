@@ -11,6 +11,10 @@ public record EnrollmentResponseDTO(
         Long sectionId,
         String sectionGroupCode,
         String courseName,
+        String sectionDayOfWeek,
+        String sectionStartTime,
+        String sectionEndTime,
+        String sectionClassroom,
         LocalDate enrollmentDate,
         EnrollmentStatus status
 ) {}
