@@ -5,7 +5,9 @@ import com.comzhichi.dto.response.LevelEvaluationResponseDTO;
 import com.comzhichi.exception.ResourceNotFoundException;
 import com.comzhichi.mapper.LevelEvaluationMapper;
 import com.comzhichi.model.Enrollment;
+import com.comzhichi.model.EnrollmentStatus;
 import com.comzhichi.model.LevelEvaluation;
+import com.comzhichi.model.LevelEvaluationResult;
 import com.comzhichi.repository.EnrollmentRepository;
 import com.comzhichi.repository.LevelEvaluationRepository;
 import com.comzhichi.repository.StudentParentRepository;
@@ -58,6 +60,14 @@ public class LevelEvaluationService {
                 .forEach(link -> notificationService.notify(
                         link.getParent().getUser(),
                         "Resultado académico de su familiar: " + saved.getResult()));
+
+        // Actualizar estado del enrollment según resultado
+        if (saved.getResult() == LevelEvaluationResult.APPROVED) {
+            enrollment.setStatus(EnrollmentStatus.APPROVED);
+        } else {
+            enrollment.setStatus(EnrollmentStatus.FAILED);
+        }
+        enrollmentRepository.save(enrollment);
 
         return evaluationMapper.toResponse(saved);
     }
