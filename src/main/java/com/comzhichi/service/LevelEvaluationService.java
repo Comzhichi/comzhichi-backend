@@ -62,12 +62,13 @@ public class LevelEvaluationService {
                         "Resultado académico de su familiar: " + saved.getResult()));
 
         // Actualizar estado del enrollment según resultado
+        Enrollment enrollmentToUpdate = saved.getEnrollment();
         if (saved.getResult() == LevelEvaluationResult.APPROVED) {
-            enrollment.setStatus(EnrollmentStatus.APPROVED);
+            enrollmentToUpdate.setStatus(EnrollmentStatus.APPROVED);
         } else {
-            enrollment.setStatus(EnrollmentStatus.FAILED);
+            enrollmentToUpdate.setStatus(EnrollmentStatus.FAILED);
         }
-        enrollmentRepository.save(enrollment);
+        enrollmentRepository.save(enrollmentToUpdate);
 
         return evaluationMapper.toResponse(saved);
     }
@@ -80,7 +81,18 @@ public class LevelEvaluationService {
         evaluation.setDate(dto.date());
         evaluation.setResult(dto.result());
         evaluation.setComments(dto.comments());
-        return evaluationMapper.toResponse(evaluationRepository.save(evaluation));
+        LevelEvaluation saved = evaluationRepository.save(evaluation);
+
+        // Mantener sincronizado el estado de la matrícula con el nuevo resultado
+        Enrollment enrollment = saved.getEnrollment();
+        if (dto.result() == LevelEvaluationResult.APPROVED) {
+            enrollment.setStatus(EnrollmentStatus.APPROVED);
+        } else {
+            enrollment.setStatus(EnrollmentStatus.FAILED);
+        }
+        enrollmentRepository.save(enrollment);
+
+        return evaluationMapper.toResponse(saved);
     }
 
     @Transactional
