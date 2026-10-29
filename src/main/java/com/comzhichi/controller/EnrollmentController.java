@@ -47,6 +47,20 @@ public class EnrollmentController {
         return enrollmentService.update(id, dto);
     }
 
+    @PatchMapping("/{id}/drop")
+    @PreAuthorize("hasRole('COORDINATOR')")
+    public EnrollmentResponseDTO drop(@PathVariable Long id) {
+        return enrollmentService.drop(id);
+    }
+
+    @PatchMapping("/{id}/transfer")
+    @PreAuthorize("hasRole('COORDINATOR')")
+    public EnrollmentResponseDTO transfer(
+            @PathVariable Long id,
+            @RequestParam Long newSectionId) {
+        return enrollmentService.transfer(id, newSectionId);
+    }
+
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('COORDINATOR')")
     @ResponseStatus(HttpStatus.NO_CONTENT)

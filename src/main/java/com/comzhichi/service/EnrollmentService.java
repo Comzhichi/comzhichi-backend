@@ -230,4 +230,72 @@ public class EnrollmentService {
         String[] parts = time.split(":");
         return Integer.parseInt(parts[0]) * 60 + Integer.parseInt(parts[1]);
     }
+
+    @Transactional
+    public EnrollmentResponseDTO drop(Long id) {
+        Enrollment enrollment = enrollmentRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Matrícula no encontrada con ID: " + id));
+
+        if (enrollment.getStatus() == EnrollmentStatus.DROPPED) {
+            throw new BusinessRuleException("La matrícula ya fue dada de baja anteriormente");
+        }
+
+        // Devolver la vacante a la sección
+        Section section = enrollment.getSection();
+        section.setAvailableVacancies(section.getAvailableVacancies() + 1);
+        sectionRepository.save(section);
+
+        enrollment.setStatus(EnrollmentStatus.DROPPED);
+        return enrollmentMapper.toResponse(enrollmentRepository.save(enrollment));
+    }
+
+    @Transactional
+    public EnrollmentResponseDTO transfer(Long enrollmentId, Long newSectionId) {
+        Enrollment enrollment = enrollmentRepository.findById(enrollmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Matrícula no encontrada con ID: " + enrollmentId));
+
+        if (enrollment.getStatus() == EnrollmentStatus.DROPPED) {
+            throw new BusinessRuleException("No se puede transferir una matrícula dada de baja");
+        }
+
+        Section newSection = sectionRepository.findById(newSectionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Sección no encontrada con ID: " + newSectionId));
+
+        // Validar que sea el mismo curso
+        if (!enrollment.getSection().getCourse().getId().equals(newSection.getCourse().getId())) {
+            throw new BusinessRuleException("Solo se puede transferir a una sección del mismo curso");
+        }
+
+        // Validar que no sea la misma sección
+        if (enrollment.getSection().getId().equals(newSectionId)) {
+            throw new BusinessRuleException("El estudiante ya está matriculado en esa sección");
+        }
+
+        // Validar vacantes
+        if (newSection.getAvailableVacancies() <= 0) {
+            throw new BusinessRuleException("No hay vacantes disponibles en la sección destino");
+        }
+
+        // Validar cruce de horario con otras matrículas activas (excluyendo la actual)
+        boolean overlap = enrollmentRepository.findByStudentId(enrollment.getStudent().getId()).stream()
+                .filter(e -> !e.getId().equals(enrollmentId))
+                .filter(e -> EnrollmentStatus.ACTIVE.equals(e.getStatus()))
+                .anyMatch(e -> schedulesOverlap(newSection, e.getSection()));
+
+        if (overlap) {
+            throw new BusinessRuleException("El horario de la sección destino se cruza con otra matrícula activa");
+        }
+
+        // Devolver vacante a sección anterior
+        Section oldSection = enrollment.getSection();
+        oldSection.setAvailableVacancies(oldSection.getAvailableVacancies() + 1);
+        sectionRepository.save(oldSection);
+
+        // Descontar vacante en sección nueva
+        newSection.setAvailableVacancies(newSection.getAvailableVacancies() - 1);
+        sectionRepository.save(newSection);
+
+        enrollment.setSection(newSection);
+        return enrollmentMapper.toResponse(enrollmentRepository.save(enrollment));
+    }
 }
