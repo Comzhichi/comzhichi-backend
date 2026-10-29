@@ -20,8 +20,9 @@ public class EnrollmentController {
     private final EnrollmentService enrollmentService;
 
     @GetMapping
-    public List<EnrollmentResponseDTO> findAll(@RequestParam(required = false) Long studentId) {
-        return enrollmentService.findAll(studentId);
+    public List<EnrollmentResponseDTO> findAll(@RequestParam(required = false) Long studentId,
+                                             @RequestParam(required = false) Long sectionId) {
+        return enrollmentService.findAll(studentId, sectionId);
     }
     @GetMapping("/section/{sectionId}")
     public List<EnrollmentResponseDTO> findBySectionId(@PathVariable Long sectionId) {
