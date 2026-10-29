@@ -9,9 +9,9 @@ import com.comzhichi.mapper.EnrollmentMapper;
 import com.comzhichi.security.UserPrincipal;
 import com.comzhichi.model.*;
 import com.comzhichi.repository.EnrollmentRepository;
+import com.comzhichi.repository.LevelEvaluationRepository;
 import com.comzhichi.repository.SectionRepository;
 import com.comzhichi.repository.StudentRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,19 +21,49 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class EnrollmentService {
 
     private final EnrollmentRepository enrollmentRepository;
     private final StudentRepository studentRepository;
     private final SectionRepository sectionRepository;
     private final EnrollmentMapper enrollmentMapper;
+    private final LevelEvaluationRepository levelEvaluationRepository;
+
+    public EnrollmentService(EnrollmentRepository enrollmentRepository,
+                            StudentRepository studentRepository,
+                            SectionRepository sectionRepository,
+                            EnrollmentMapper enrollmentMapper) {
+        this(enrollmentRepository, studentRepository, sectionRepository, enrollmentMapper, null);
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public EnrollmentService(EnrollmentRepository enrollmentRepository,
+                            StudentRepository studentRepository,
+                            SectionRepository sectionRepository,
+                            EnrollmentMapper enrollmentMapper,
+                            LevelEvaluationRepository levelEvaluationRepository) {
+        this.enrollmentRepository = enrollmentRepository;
+        this.studentRepository = studentRepository;
+        this.sectionRepository = sectionRepository;
+        this.enrollmentMapper = enrollmentMapper;
+        this.levelEvaluationRepository = levelEvaluationRepository;
+    }
 
     @Transactional(readOnly = true)
-    public List<EnrollmentResponseDTO> findAll(Long studentId) {
-        List<Enrollment> enrollments = (studentId == null)
-                ? enrollmentRepository.findAll()
-                : enrollmentRepository.findByStudentId(studentId);
+    public List<EnrollmentResponseDTO> findAll(Long studentId, Long sectionId) {
+        List<Enrollment> enrollments;
+        if (sectionId != null) {
+            enrollments = enrollmentRepository.findBySectionId(sectionId);
+            if (studentId != null) {
+                enrollments = enrollments.stream()
+                        .filter(e -> e.getStudent() != null && studentId.equals(e.getStudent().getId()))
+                        .toList();
+            }
+        } else if (studentId != null) {
+            enrollments = enrollmentRepository.findByStudentId(studentId);
+        } else {
+            enrollments = enrollmentRepository.findAll();
+        }
         return enrollments.stream().map(enrollmentMapper::toResponse).toList();
     }
 
@@ -77,9 +107,24 @@ public class EnrollmentService {
         // Verificar prerequisito
         Course requiredCourse = newSection.getCourse().getPrerequisite();
         if (requiredCourse != null) {
-            boolean approved = enrollmentRepository.findByStudentId(student.getId()).stream()
-                    .anyMatch(e -> e.getSection().getCourse().getId().equals(requiredCourse.getId())
-                            && EnrollmentStatus.APPROVED.equals(e.getStatus()));
+            List<Enrollment> studentEnrollments = enrollmentRepository.findByStudentId(student.getId());
+            boolean approved = studentEnrollments.stream()
+                    .anyMatch(e -> coursesMatch(e.getSection().getCourse(), requiredCourse)
+                            && isPrerequisiteApproved(e));
+
+            // Sincronizar (reparar) el estado de las matrículas aprobadas que
+            // aún figuren como ACTIVE, de modo que validaciones futuras pasen.
+            if (approved) {
+                studentEnrollments.stream()
+                        .filter(e -> coursesMatch(e.getSection().getCourse(), requiredCourse))
+                        .filter(e -> !EnrollmentStatus.APPROVED.equals(e.getStatus()))
+                        .filter(this::hasApprovedLevelEvaluation)
+                        .forEach(e -> {
+                            e.setStatus(EnrollmentStatus.APPROVED);
+                            enrollmentRepository.save(e);
+                        });
+            }
+
             if (!approved)
                 throw new BusinessRuleException("El estudiante no ha aprobado el prerequisito: "
                         + requiredCourse.getName());
@@ -141,6 +186,25 @@ public class EnrollmentService {
         sectionRepository.save(section);
 
         enrollmentRepository.delete(enrollment);
+    }
+
+    private boolean coursesMatch(Course a, Course b) {
+        if (a == null || b == null) return false;
+        if (a.getId() != null && a.getId().equals(b.getId())) return true;
+        return a.getName() != null && a.getName().equalsIgnoreCase(b.getName());
+    }
+
+    private boolean hasApprovedLevelEvaluation(Enrollment enrollment) {
+        if (levelEvaluationRepository == null || enrollment == null || enrollment.getId() == null)
+            return false;
+        return levelEvaluationRepository.findByEnrollmentId(enrollment.getId()).stream()
+                .anyMatch(ev -> ev.getResult() == LevelEvaluationResult.APPROVED);
+    }
+
+    private boolean isPrerequisiteApproved(Enrollment enrollment) {
+        if (EnrollmentStatus.APPROVED.equals(enrollment.getStatus()))
+            return true;
+        return hasApprovedLevelEvaluation(enrollment);
     }
 
     // --- Lógica de cruce de horarios con dayOfWeek, startTime, endTime ---
