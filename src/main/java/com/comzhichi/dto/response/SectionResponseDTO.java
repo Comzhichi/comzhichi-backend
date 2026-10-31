@@ -11,6 +11,9 @@ public record SectionResponseDTO(
         Integer availableVacancies,
         Long courseId,
         String courseName,
+        String courseLevel,
+        String courseDescription,
         Long teacherId,
-        String teacherSpecialty
+        String teacherSpecialty,
+        String teacherName
 ) {}
