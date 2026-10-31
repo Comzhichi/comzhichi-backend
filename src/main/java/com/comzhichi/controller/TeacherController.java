@@ -26,6 +26,15 @@ public class TeacherController {
         return teacherService.findAll(specialty);
     }
 
+    @GetMapping("/eligible")
+    public List<TeacherResponseDTO> findEligible(
+            @RequestParam(required = false) Long courseId,
+            @RequestParam(required = false) String dayOfWeek,
+            @RequestParam(required = false) String startTime,
+            @RequestParam(required = false) String endTime) {
+        return teacherService.findEligible(courseId, dayOfWeek, startTime, endTime);
+    }
+
     @GetMapping("/{id}")
     public TeacherResponseDTO findById(@PathVariable Long id) {
         return teacherService.findById(id);
