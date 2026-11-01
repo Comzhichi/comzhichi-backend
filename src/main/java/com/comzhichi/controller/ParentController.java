@@ -2,6 +2,7 @@ package com.comzhichi.controller;
 
 import com.comzhichi.dto.request.ParentRequestDTO;
 import com.comzhichi.dto.response.ParentResponseDTO;
+import com.comzhichi.dto.response.StudentParentResponseDTO;
 import com.comzhichi.security.UserPrincipal;
 import com.comzhichi.service.ParentService;
 import jakarta.validation.Valid;
@@ -35,6 +36,12 @@ public class ParentController {
     @PreAuthorize("hasRole('PARENT')")
     public ParentResponseDTO me(@AuthenticationPrincipal UserPrincipal principal) {
         return parentService.findByUserId(principal.getUser().getId());
+    }
+
+    @GetMapping("/me/students")
+    @PreAuthorize("hasRole('PARENT')")
+    public List<StudentParentResponseDTO> myStudents(@AuthenticationPrincipal UserPrincipal principal) {
+        return parentService.findMyStudents(principal.getUser().getId());
     }
 
     @PostMapping

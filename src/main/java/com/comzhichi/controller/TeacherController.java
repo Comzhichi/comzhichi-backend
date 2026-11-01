@@ -59,6 +59,12 @@ public class TeacherController {
         return teacherService.update(id, dto);
     }
 
+    @PatchMapping("/{id}/deactivate")
+    @PreAuthorize("hasRole('COORDINATOR')")
+    public TeacherResponseDTO deactivate(@PathVariable Long id) {
+        return teacherService.deactivate(id);
+    }
+
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('COORDINATOR')")
     @ResponseStatus(HttpStatus.NO_CONTENT)

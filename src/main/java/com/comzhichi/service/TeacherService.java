@@ -68,6 +68,7 @@ public class TeacherService {
         final Section finalCandidate = candidate;
 
         return teacherRepository.findAll().stream()
+                .filter(t -> Boolean.TRUE.equals(t.getActive()))
                 .filter(t -> finalCourse == null || isSpecialtyCompatible(t.getSpecialty(), finalCourse.getLanguage()))
                 .filter(t -> finalCandidate == null || sectionRepository.findByTeacherId(t.getId()).stream()
                         .noneMatch(s -> sectionsOverlap(s, finalCandidate)))
@@ -146,6 +147,14 @@ public class TeacherService {
         Teacher teacher = teacherRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Docente no encontrado con ID: " + id));
         teacher.setSpecialty(dto.specialty());
+        return teacherMapper.toResponse(teacherRepository.save(teacher));
+    }
+
+    @Transactional
+    public TeacherResponseDTO deactivate(Long id) {
+        Teacher teacher = teacherRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Docente no encontrado con ID: " + id));
+        teacher.setActive(false);
         return teacherMapper.toResponse(teacherRepository.save(teacher));
     }
 
