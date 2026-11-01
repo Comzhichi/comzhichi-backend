@@ -1,9 +1,11 @@
 package com.comzhichi.service;
 
+import com.comzhichi.dto.request.ChangePasswordRequestDTO;
 import com.comzhichi.dto.request.LoginRequestDTO;
 import com.comzhichi.dto.request.UserRequestDTO;
 import com.comzhichi.dto.response.AuthResponseDTO;
 import com.comzhichi.exception.BusinessRuleException;
+import com.comzhichi.exception.ResourceNotFoundException;
 import com.comzhichi.mapper.UserMapper;
 import com.comzhichi.model.*;
 import com.comzhichi.repository.*;
@@ -26,6 +28,7 @@ public class AuthService {
     private final TeacherRepository teacherRepo;
     private final CoordinatorRepository coordinatorRepo;
     private final ParentRepository parentRepo;
+    private final StudentParentRepository studentParentRepo;
     private final PasswordEncoder encoder;
     private final AuthenticationManager authManager;
     private final JwtService jwt;
@@ -67,11 +70,40 @@ public class AuthService {
                 p.setUser(user);
                 p.setPhoneContact(dto.phoneContact());
                 parentRepo.save(p);
+
+                // Vinculación opcional con un estudiante (por email del estudiante)
+                if (dto.studentEmail() != null && !dto.studentEmail().isBlank()) {
+                    User studentUser = userRepo.findByEmail(dto.studentEmail().trim())
+                            .orElseThrow(() -> new BusinessRuleException("No se encontró un estudiante con ese correo"));
+                    Student student = studentRepo.findByUser_Id(studentUser.getId())
+                            .orElseThrow(() -> new BusinessRuleException("El usuario indicado no es un estudiante"));
+                    if (studentParentRepo.existsByStudent_IdAndParent_Id(student.getId(), p.getId())) {
+                        throw new BusinessRuleException("El familiar ya se encuentra registrado para este estudiante");
+                    }
+                    StudentParent link = new StudentParent();
+                    link.setStudent(student);
+                    link.setParent(p);
+                    link.setRelationship("Familiar");
+                    studentParentRepo.save(link);
+                }
             }
         }
 
         String token = jwt.generateToken(new UserPrincipal(user));
         return new AuthResponseDTO(token, "Bearer", userMapper.toResponse(user), profileIdOf(user));
+    }
+
+    @Transactional
+    public void changePassword(UserPrincipal principal, ChangePasswordRequestDTO dto) {
+        User user = userRepo.findById(principal.getUser().getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+
+        if (!encoder.matches(dto.currentPassword(), user.getPassword())) {
+            throw new BusinessRuleException("La contraseña actual es incorrecta");
+        }
+
+        user.setPassword(encoder.encode(dto.newPassword()));
+        userRepo.save(user);
     }
 
     public AuthResponseDTO login(LoginRequestDTO dto) {

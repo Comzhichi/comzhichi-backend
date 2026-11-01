@@ -13,5 +13,6 @@ public record UserRequestDTO(
         @NotNull Role role,
         @Size(max = 100) String specialty,    // solo TEACHER
         @Size(max = 100) String department,   // solo COORDINATOR
-        @Size(max = 20)  String phoneContact  // solo PARENT
+        @Size(max = 20)  String phoneContact,  // solo PARENT
+        @Size(max = 120) String studentEmail   // solo PARENT (vinculación)
 ) {}

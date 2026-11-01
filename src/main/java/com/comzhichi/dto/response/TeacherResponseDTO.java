@@ -5,5 +5,6 @@ public record TeacherResponseDTO(
         Long userId,
         String userFullName,
         String userEmail,
-        String specialty
+        String specialty,
+        Boolean active
 ) {}

@@ -2,6 +2,7 @@ package com.comzhichi.service;
 
 import com.comzhichi.dto.request.CourseRequestDTO;
 import com.comzhichi.dto.response.CourseResponseDTO;
+import com.comzhichi.exception.ConflictException;
 import com.comzhichi.exception.ResourceNotFoundException;
 import com.comzhichi.mapper.CourseMapper;
 import com.comzhichi.model.Coordinator;
@@ -44,6 +45,16 @@ public class CourseService {
 
     @Transactional
     public CourseResponseDTO create(CourseRequestDTO dto) {
+        boolean duplicate = courseRepository.findAll().stream().anyMatch(c ->
+                c.getName() != null && dto.name() != null
+                        && c.getName().trim().equalsIgnoreCase(dto.name().trim())
+                        && (dto.language() == null || c.getLanguage() == null
+                            || c.getLanguage().trim().equalsIgnoreCase(dto.language().trim()))
+                        && (dto.level() == null || c.getLevel() == null
+                            || c.getLevel().trim().equalsIgnoreCase(dto.level().trim())));
+        if (duplicate) {
+            throw new ConflictException("El curso ya existe en la oferta académica");
+        }
         Course course = courseMapper.toEntity(dto);
 
         if (dto.coordinatorId() != null) {
@@ -63,6 +74,17 @@ public class CourseService {
 
     @Transactional
     public CourseResponseDTO update(Long id, CourseRequestDTO dto) {
+        boolean duplicate = courseRepository.findAll().stream().anyMatch(c ->
+                !c.getId().equals(id)
+                        && c.getName() != null && dto.name() != null
+                        && c.getName().trim().equalsIgnoreCase(dto.name().trim())
+                        && (dto.language() == null || c.getLanguage() == null
+                            || c.getLanguage().trim().equalsIgnoreCase(dto.language().trim()))
+                        && (dto.level() == null || c.getLevel() == null
+                            || c.getLevel().trim().equalsIgnoreCase(dto.level().trim())));
+        if (duplicate) {
+            throw new ConflictException("El curso ya existe en la oferta académica");
+        }
         Course course = courseRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Curso no encontrado con ID: " + id));
 

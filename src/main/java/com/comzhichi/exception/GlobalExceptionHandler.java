@@ -95,7 +95,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse> handleGeneric(Exception ex, HttpServletRequest req) {
-        return build(HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error", "Ocurrió un error inesperado", req);
+        ex.printStackTrace();
+        return build(HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error", ex.getClass().getSimpleName() + ": " + ex.getMessage(), req);
     }
 
     private ResponseEntity<ApiErrorResponse> build(HttpStatus status, String error, String message, HttpServletRequest req) {
