@@ -10,6 +10,7 @@ import org.mapstruct.Mapping;
 public interface CoordinatorMapper {
 
     @Mapping(target = "userId", source = "user.id")
+    @Mapping(target = "userFullName", source = "user.fullName")
     @Mapping(target = "userEmail", source = "user.email")
     CoordinatorResponseDTO toResponse(Coordinator coordinator);
 

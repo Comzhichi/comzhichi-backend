@@ -2,11 +2,16 @@ package com.comzhichi.service;
 
 import com.comzhichi.dto.request.ParentRequestDTO;
 import com.comzhichi.dto.response.ParentResponseDTO;
+import com.comzhichi.exception.BusinessRuleException;
+import com.comzhichi.exception.ConflictException;
 import com.comzhichi.exception.ResourceNotFoundException;
 import com.comzhichi.mapper.ParentMapper;
+import com.comzhichi.mapper.StudentParentMapper;
 import com.comzhichi.model.Parent;
+import com.comzhichi.model.Role;
 import com.comzhichi.model.User;
 import com.comzhichi.repository.ParentRepository;
+import com.comzhichi.repository.StudentParentRepository;
 import com.comzhichi.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,6 +26,8 @@ public class ParentService {
     private final ParentRepository parentRepository;
     private final UserRepository userRepository;
     private final ParentMapper parentMapper;
+    private final StudentParentRepository studentParentRepository;
+    private final StudentParentMapper studentParentMapper;
 
     @Transactional(readOnly = true)
     public List<ParentResponseDTO> findAll() {
@@ -41,10 +48,31 @@ public class ParentService {
         User user = userRepository.findById(dto.userId())
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con ID: " + dto.userId()));
 
+        if (user.getRole() != Role.PARENT)
+            throw new BusinessRuleException("El usuario no tiene rol PARENT");
+        if (parentRepository.existsByUser_Id(user.getId()))
+            throw new ConflictException("El usuario ya tiene un perfil de apoderado");
+
         Parent parent = parentMapper.toEntity(dto);
         parent.setUser(user);
 
         return parentMapper.toResponse(parentRepository.save(parent));
+    }
+
+    @Transactional(readOnly = true)
+    public List<com.comzhichi.dto.response.StudentParentResponseDTO> findMyStudents(Long userId) {
+        Parent parent = parentRepository.findByUser_Id(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Perfil de apoderado no encontrado"));
+        return studentParentRepository.findByParentId(parent.getId()).stream()
+                .map(studentParentMapper::toResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public ParentResponseDTO findByUserId(Long userId) {
+        return parentRepository.findByUser_Id(userId)
+                .map(parentMapper::toResponse)
+                .orElseThrow(() -> new ResourceNotFoundException("Perfil de apoderado no encontrado para el usuario: " + userId));
     }
 
     @Transactional

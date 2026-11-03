@@ -23,4 +23,7 @@ public class Teacher {
 
     @Column(length = 100)
     private String specialty;
+
+    @Column(nullable = false)
+    private Boolean active = true;
 }

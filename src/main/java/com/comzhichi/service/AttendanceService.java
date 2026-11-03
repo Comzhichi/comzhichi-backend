@@ -27,7 +27,6 @@ public class AttendanceService {
         List<Attendance> list = (enrollmentId == null)
                 ? attendanceRepository.findAll()
                 : attendanceRepository.findByEnrollmentId(enrollmentId);
-
         return list.stream().map(attendanceMapper::toResponse).toList();
     }
 
@@ -45,7 +44,6 @@ public class AttendanceService {
 
         Attendance attendance = attendanceMapper.toEntity(dto);
         attendance.setEnrollment(enrollment);
-
         return attendanceMapper.toResponse(attendanceRepository.save(attendance));
     }
 
@@ -57,7 +55,6 @@ public class AttendanceService {
         attendance.setDate(dto.date());
         attendance.setStatus(dto.status());
         attendance.setObservation(dto.observation());
-
         return attendanceMapper.toResponse(attendanceRepository.save(attendance));
     }
 

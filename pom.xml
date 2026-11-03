@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.comzhichi</groupId>
     <artifactId>comzhichi-backend</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0.0</version>
     <name>comzhichi-backend</name>
     <description>comzhichi-backend</description>
     <url/>
@@ -56,6 +56,10 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security-oauth2-resource-server</artifactId>
         </dependency>
 
         <!-- Validaciones ( @NotNull, @NotBlank, etc) -->

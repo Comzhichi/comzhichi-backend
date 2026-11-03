@@ -11,8 +11,11 @@ public interface SectionMapper {
 
     @Mapping(target = "courseId", source = "course.id")
     @Mapping(target = "courseName", source = "course.name")
+    @Mapping(target = "courseLevel", source = "course.level")
+    @Mapping(target = "courseDescription", source = "course.description")
     @Mapping(target = "teacherId", source = "teacher.id")
     @Mapping(target = "teacherSpecialty", source = "teacher.specialty")
+    @Mapping(target = "teacherName", source = "teacher.user.fullName")
     SectionResponseDTO toResponse(Section section);
 
     @Mapping(target = "id", ignore = true)

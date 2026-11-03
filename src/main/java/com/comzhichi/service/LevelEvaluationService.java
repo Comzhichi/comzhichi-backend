@@ -4,11 +4,13 @@ import com.comzhichi.dto.request.LevelEvaluationRequestDTO;
 import com.comzhichi.dto.response.LevelEvaluationResponseDTO;
 import com.comzhichi.exception.ResourceNotFoundException;
 import com.comzhichi.mapper.LevelEvaluationMapper;
+import com.comzhichi.model.Enrollment;
+import com.comzhichi.model.EnrollmentStatus;
 import com.comzhichi.model.LevelEvaluation;
-import com.comzhichi.repository.StudentParentRepository;
-import com.comzhichi.repository.CourseRepository;
+import com.comzhichi.model.LevelEvaluationResult;
+import com.comzhichi.repository.EnrollmentRepository;
 import com.comzhichi.repository.LevelEvaluationRepository;
-import com.comzhichi.repository.StudentRepository;
+import com.comzhichi.repository.StudentParentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,17 +20,18 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class LevelEvaluationService {
+
     private final LevelEvaluationRepository evaluationRepository;
-    private final StudentRepository studentRepository;
-    private final CourseRepository courseRepository;
+    private final EnrollmentRepository enrollmentRepository;
     private final LevelEvaluationMapper evaluationMapper;
     private final NotificationService notificationService;
     private final StudentParentRepository studentParentRepository;
 
     @Transactional(readOnly = true)
-    public List<LevelEvaluationResponseDTO> findAll(Long studentId) {
-        List<LevelEvaluation> list = studentId == null ? evaluationRepository.findAll()
-                : evaluationRepository.findByStudentId(studentId);
+    public List<LevelEvaluationResponseDTO> findAll(Long enrollmentId) {
+        List<LevelEvaluation> list = (enrollmentId == null)
+                ? evaluationRepository.findAll()
+                : evaluationRepository.findByEnrollmentId(enrollmentId);
         return list.stream().map(evaluationMapper::toResponse).toList();
     }
 
@@ -40,17 +43,33 @@ public class LevelEvaluationService {
 
     @Transactional
     public LevelEvaluationResponseDTO create(LevelEvaluationRequestDTO dto) {
+        Enrollment enrollment = enrollmentRepository.findById(dto.enrollmentId())
+                .orElseThrow(() -> new ResourceNotFoundException("Matrícula no encontrada con ID: " + dto.enrollmentId()));
+
         LevelEvaluation evaluation = evaluationMapper.toEntity(dto);
-        evaluation.setStudent(studentRepository.findById(dto.studentId())
-                .orElseThrow(() -> new ResourceNotFoundException("Estudiante no encontrado con ID: " + dto.studentId())));
-        evaluation.setCourse(courseRepository.findById(dto.courseId())
-                .orElseThrow(() -> new ResourceNotFoundException("Curso no encontrado con ID: " + dto.courseId())));
+        evaluation.setEnrollment(enrollment);
         LevelEvaluation saved = evaluationRepository.save(evaluation);
-        notificationService.notify(saved.getStudent().getUser(),
-                "Resultado de evaluación: " + saved.getResult());
-        studentParentRepository.findByStudentId(saved.getStudent().getId())
-                .forEach(link -> notificationService.notify(link.getParent().getUser(),
-                        "Resultado académico del estudiante: " + saved.getResult()));
+
+        // Notificar al estudiante
+        notificationService.notify(
+                saved.getEnrollment().getStudent().getUser(),
+                "Resultado de evaluación de nivel: " + saved.getResult());
+
+        // Notificar a los familiares vinculados
+        studentParentRepository.findByStudentId(saved.getEnrollment().getStudent().getId())
+                .forEach(link -> notificationService.notify(
+                        link.getParent().getUser(),
+                        "Resultado académico de su familiar: " + saved.getResult()));
+
+        // Actualizar estado del enrollment según resultado
+        Enrollment enrollmentToUpdate = saved.getEnrollment();
+        if (saved.getResult() == LevelEvaluationResult.APPROVED) {
+            enrollmentToUpdate.setStatus(EnrollmentStatus.APPROVED);
+        } else {
+            enrollmentToUpdate.setStatus(EnrollmentStatus.FAILED);
+        }
+        enrollmentRepository.save(enrollmentToUpdate);
+
         return evaluationMapper.toResponse(saved);
     }
 
@@ -58,9 +77,22 @@ public class LevelEvaluationService {
     public LevelEvaluationResponseDTO update(Long id, LevelEvaluationRequestDTO dto) {
         LevelEvaluation evaluation = evaluationRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Evaluación de nivel no encontrada con ID: " + id));
+
         evaluation.setDate(dto.date());
         evaluation.setResult(dto.result());
-        return evaluationMapper.toResponse(evaluationRepository.save(evaluation));
+        evaluation.setComments(dto.comments());
+        LevelEvaluation saved = evaluationRepository.save(evaluation);
+
+        // Mantener sincronizado el estado de la matrícula con el nuevo resultado
+        Enrollment enrollment = saved.getEnrollment();
+        if (dto.result() == LevelEvaluationResult.APPROVED) {
+            enrollment.setStatus(EnrollmentStatus.APPROVED);
+        } else {
+            enrollment.setStatus(EnrollmentStatus.FAILED);
+        }
+        enrollmentRepository.save(enrollment);
+
+        return evaluationMapper.toResponse(saved);
     }
 
     @Transactional

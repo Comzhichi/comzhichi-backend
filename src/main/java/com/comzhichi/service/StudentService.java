@@ -2,8 +2,11 @@ package com.comzhichi.service;
 
 import com.comzhichi.dto.request.StudentRequestDTO;
 import com.comzhichi.dto.response.StudentResponseDTO;
+import com.comzhichi.exception.BusinessRuleException;
+import com.comzhichi.exception.ConflictException;
 import com.comzhichi.exception.ResourceNotFoundException;
 import com.comzhichi.mapper.StudentMapper;
+import com.comzhichi.model.Role;
 import com.comzhichi.model.Student;
 import com.comzhichi.model.User;
 import com.comzhichi.repository.StudentRepository;
@@ -24,12 +27,8 @@ public class StudentService {
     private final StudentMapper studentMapper;
 
     @Transactional(readOnly = true)
-    public List<StudentResponseDTO> findAll(String level) {
-        List<Student> students = (level == null || level.isBlank())
-                ? studentRepository.findAll()
-                : studentRepository.findByLevelContainingIgnoreCase(level);
-
-        return students.stream()
+    public List<StudentResponseDTO> findAll() {
+        return studentRepository.findAll().stream()
                 .map(studentMapper::toResponse)
                 .toList();
     }
@@ -59,20 +58,22 @@ public class StudentService {
         User user = userRepository.findById(dto.userId())
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con ID: " + dto.userId()));
 
+        if (user.getRole() != Role.STUDENT)
+            throw new BusinessRuleException("El usuario no tiene rol STUDENT");
+        if (studentRepository.existsByUser_Id(user.getId()))
+            throw new ConflictException("El usuario ya tiene un perfil de estudiante");
+
         Student student = studentMapper.toEntity(dto);
         student.setUser(user);
 
         return studentMapper.toResponse(studentRepository.save(student));
     }
 
-    @Transactional
-    public StudentResponseDTO update(Long id, StudentRequestDTO dto) {
-        Student student = studentRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Estudiante no encontrado con ID: " + id));
-
-        student.setLevel(dto.level());
-        student.setInstitution(dto.institution());
-        return studentMapper.toResponse(studentRepository.save(student));
+    @Transactional(readOnly = true)
+    public StudentResponseDTO findByUserId(Long userId) {
+        return studentRepository.findByUser_Id(userId)
+                .map(studentMapper::toResponse)
+                .orElseThrow(() -> new ResourceNotFoundException("Perfil de estudiante no encontrado para el usuario: " + userId));
     }
 
     @Transactional

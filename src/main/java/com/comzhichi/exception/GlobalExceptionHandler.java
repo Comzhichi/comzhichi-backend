@@ -5,7 +5,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -16,6 +18,31 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<ApiErrorResponse> handleBadCredentials(
+            BadCredentialsException ex,
+            HttpServletRequest req) {
+        return build(
+                HttpStatus.UNAUTHORIZED,
+                "Unauthorized",
+                "Usuario o contraseña incorrectos",
+                req
+        );
+    }
+
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<ApiErrorResponse> handleInvalidCredentials(
+            InvalidCredentialsException ex,
+            HttpServletRequest req) {
+
+        return build(
+                HttpStatus.UNAUTHORIZED,
+                "Unauthorized",
+                "Usuario o contraseña incorrectos",
+                req
+        );
+    }
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiErrorResponse> handleNotFound(ResourceNotFoundException ex, HttpServletRequest req) {
@@ -59,29 +86,22 @@ public class GlobalExceptionHandler {
             InvalidCredentialsException ex,
             HttpServletRequest req) {
 
-        return build(
-                HttpStatus.UNAUTHORIZED,
-                "Unauthorized",
-                ex.getMessage(),
-                req
-        );
-
-    }
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiErrorResponse> handleAccessDenied(
             AccessDeniedException ex,
             HttpServletRequest req) {
+                return build(
+                                HttpStatus.FORBIDDEN,
+                                "Forbidden",
+                                "No tienes permisos para realizar esta operación",
+                                req
+                                );
+            }
 
-        return build(
-                HttpStatus.FORBIDDEN,
-                "Forbidden",
-                "No tienes permiso para realizar esta acción",
-                req
-        );
-    }
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse> handleGeneric(Exception ex, HttpServletRequest req) {
-        return build(HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error", "Ocurrió un error inesperado", req);
+        ex.printStackTrace();
+        return build(HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error", ex.getClass().getSimpleName() + ": " + ex.getMessage(), req);
     }
 
     private ResponseEntity<ApiErrorResponse> build(HttpStatus status, String error, String message, HttpServletRequest req) {

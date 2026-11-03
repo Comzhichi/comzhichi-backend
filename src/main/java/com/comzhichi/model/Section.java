@@ -7,9 +7,7 @@ import lombok.Setter;
 
 @Entity
 @Table(name = "sections")
-@Getter
-@Setter
-@NoArgsConstructor
+@Getter @Setter @NoArgsConstructor
 public class Section {
 
     @Id
@@ -19,8 +17,14 @@ public class Section {
     @Column(name = "group_code", nullable = false, length = 20)
     private String groupCode;
 
-    @Column(nullable = false, length = 100)
-    private String schedule;
+    @Column(name = "day_of_week", nullable = false, length = 50)
+    private String dayOfWeek;  // ej. "MONDAY,WEDNESDAY"
+
+    @Column(name = "start_time", nullable = false, length = 10)
+    private String startTime;  // ej. "08:00"
+
+    @Column(name = "end_time", nullable = false, length = 10)
+    private String endTime;    // ej. "10:00"
 
     @Column(length = 50)
     private String classroom;

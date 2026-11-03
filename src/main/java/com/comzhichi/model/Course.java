@@ -7,9 +7,7 @@ import lombok.Setter;
 
 @Entity
 @Table(name = "courses")
-@Getter
-@Setter
-@NoArgsConstructor
+@Getter @Setter @NoArgsConstructor
 public class Course {
 
     @Id
@@ -20,6 +18,9 @@ public class Course {
     private String name;
 
     @Column(nullable = false, length = 50)
+    private String language;
+
+    @Column(nullable = false, length = 50)
     private String level;
 
     @Column(columnDefinition = "TEXT")
@@ -28,4 +29,8 @@ public class Course {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "coordinator_id")
     private Coordinator coordinator;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "prerequisite_id")
+    private Course prerequisite;
 }

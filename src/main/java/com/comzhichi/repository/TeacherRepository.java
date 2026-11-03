@@ -12,5 +12,7 @@ public interface TeacherRepository extends JpaRepository<Teacher, Long> {
 
     // Derived Query Method de Spring Data JPA
     List<Teacher> findBySpecialtyContainingIgnoreCase(String specialty);
+
     Optional<Teacher> findByUser_Id(Long userId);
+    boolean existsByUser_Id(Long userId);
 }

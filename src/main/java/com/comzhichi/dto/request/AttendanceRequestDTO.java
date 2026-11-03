@@ -1,9 +1,7 @@
 package com.comzhichi.dto.request;
 
-import jakarta.validation.constraints.NotBlank;
+import com.comzhichi.model.AttendanceStatus;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
-
 import java.time.LocalDate;
 
 public record AttendanceRequestDTO(
@@ -13,9 +11,8 @@ public record AttendanceRequestDTO(
         @NotNull(message = "La fecha es obligatoria")
         LocalDate date,
 
-        @NotBlank(message = "El estado es obligatorio")
-        @Size(max = 50, message = "El estado no debe exceder los 50 caracteres")
-        String status,
+        @NotNull(message = "El estado es obligatorio")
+        AttendanceStatus status,
 
         String observation
 ) {}

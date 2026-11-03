@@ -1,8 +1,7 @@
 package com.comzhichi.dto.request;
 
-import jakarta.validation.constraints.NotBlank;
+import com.comzhichi.model.EnrollmentStatus;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 
 import java.time.LocalDate;
 
@@ -16,7 +15,6 @@ public record EnrollmentRequestDTO(
         @NotNull(message = "La fecha de matrícula es obligatoria")
         LocalDate enrollmentDate,
 
-        @NotBlank(message = "El estado es obligatorio")
-        @Size(max = 50, message = "El estado no debe exceder los 50 caracteres")
-        String status
+        @NotNull(message = "El estado es obligatorio")
+        EnrollmentStatus status
 ) {}

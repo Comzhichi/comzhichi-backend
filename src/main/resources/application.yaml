@@ -2,19 +2,30 @@
     application:
       name: comzhichi-backend-develop
 
-    datasource:
-      driver-class-name: org.postgresql.Driver
-      url: jdbc:postgresql://aws-0-us-east-1.pooler.supabase.com:5432/postgres
-      username: postgres.kslokrehwebouzuljdti
-      password: ${SUPABASE_DB_PASSWORD}
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    # ── Conexión local (activa) ──────────────────────────────────────────────
+    url: jdbc:postgresql://localhost:5432/db_comzhichi
+    username: postgres
+    password: adminadmin
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 1
+    # ── Supabase (comentado hasta despliegue en producción) ──────────────────
+    # url: jdbc:postgresql://aws-0-us-east-1.pooler.supabase.com:5432/postgres
+    # username: postgres.kslokrehwebouzuljdti
+    # password: comzhichiadmin
+    # hikari:
+    #   maximum-pool-size: 3
+    #   minimum-idle: 1
 
-    servlet:
-      multipart:
-        max-file-size: 5MB
-        max-request-size: 5MB
-
-    jpa:
-      database: postgresql
+  jpa:
+    database: postgresql
+    defer-datasource-initialization: true # Ejecuta data.sql DESPUÉS de que Hibernate cree las tablas
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
       hibernate:
         ddl-auto: update
       show-sql: true
@@ -22,26 +33,27 @@
         hibernate:
           format_sql: true
 
-  server:
-    port: 8081
+  sql:
+    init:
+      mode: always
+      data-locations: classpath:data.sql
+
+server:
+  port: 8080
 
   jwt:
     secret: ${JWT_SECRET}
     expiration-ms: 86400000
 
-  springdoc:
-    api-docs:
-      path: /v3/api-docs
-    swagger-ui:
-      path: /swagger-ui.html
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
 
-  app:
-    cors:
-      allowed-origins: "http://localhost:4200"
-    security:
-      jwt-secret: ${JWT_SECRET}
-      jwt-expiration-minutes: 60
-    supabase:
-      url: ${SUPABASE_URL}
-      bucket: event-images
-      key: ${SUPABASE_SERVICE_ROLE_KEY}
+app:
+  cors:
+    allowed-origins: "http://localhost:4200,http://127.0.0.1:4200"
+  security:
+    jwt-secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+    jwt-expiration-minutes: 60

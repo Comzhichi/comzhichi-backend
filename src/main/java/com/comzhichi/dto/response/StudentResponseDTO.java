@@ -4,6 +4,5 @@ public record StudentResponseDTO(
         Long id,
         Long userId,
         String userEmail,
-        String level,
-        String institution
+        String userFullName
 ) {}

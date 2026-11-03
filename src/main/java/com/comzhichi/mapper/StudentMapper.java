@@ -11,6 +11,7 @@ public interface StudentMapper {
 
     @Mapping(target = "userId", source = "user.id")
     @Mapping(target = "userEmail", source = "user.email")
+    @Mapping(target = "userFullName", source = "user.fullName")
     StudentResponseDTO toResponse(Student student);
 
     @Mapping(target = "id", ignore = true)

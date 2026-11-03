@@ -1,17 +1,15 @@
 package com.comzhichi.service;
 
+import com.comzhichi.dto.request.ChangePasswordRequestDTO;
 import com.comzhichi.dto.request.LoginRequestDTO;
 import com.comzhichi.dto.request.UserRequestDTO;
 import com.comzhichi.dto.response.AuthResponseDTO;
 import com.comzhichi.dto.response.LoginResponseDTO;
 import com.comzhichi.exception.BusinessRuleException;
-import com.comzhichi.exception.InvalidCredentialsException;
+import com.comzhichi.exception.ResourceNotFoundException;
 import com.comzhichi.mapper.UserMapper;
-import com.comzhichi.model.Role;
-import com.comzhichi.model.Student;
-import com.comzhichi.model.User;
-import com.comzhichi.repository.StudentRepository;
-import com.comzhichi.repository.UserRepository;
+import com.comzhichi.model.*;
+import com.comzhichi.repository.*;
 import com.comzhichi.security.JwtService;
 import com.comzhichi.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +26,10 @@ public class AuthService {
 
     private final UserRepository userRepo;
     private final StudentRepository studentRepo;
+    private final TeacherRepository teacherRepo;
+    private final CoordinatorRepository coordinatorRepo;
+    private final ParentRepository parentRepo;
+    private final StudentParentRepository studentParentRepo;
     private final PasswordEncoder encoder;
     private final AuthenticationManager authManager;
     private final JwtService jwt;
@@ -35,57 +37,91 @@ public class AuthService {
 
     @Transactional
     public AuthResponseDTO register(UserRequestDTO dto) {
-        if (userRepo.findByEmail(dto.email()).isPresent()) {
+        if (userRepo.findByEmail(dto.email()).isPresent())
             throw new BusinessRuleException("El correo ya está registrado");
-        }
-
-        if (userRepo.findByName(dto.name()).isPresent()) {
-            throw new BusinessRuleException("El nombre ya está en uso");
-        }
 
         User user = new User();
-        user.setName(dto.name());
+        user.setFullName(dto.fullName());
         user.setEmail(dto.email());
         user.setPassword(encoder.encode(dto.password()));
         user.setEnabled(true);
-        user.setRole(Role.STUDENT);
-
+        user.setRole(dto.role());
         userRepo.save(user);
 
-        Student student = new Student();
-        student.setUser(user);
-        student.setFullName(dto.fullName());
+        switch (dto.role()) {
+            case STUDENT -> {
+                Student s = new Student();
+                s.setUser(user);
+                studentRepo.save(s);
+            }
+            case TEACHER -> {
+                Teacher t = new Teacher();
+                t.setUser(user);
+                t.setSpecialty(dto.specialty());
+                teacherRepo.save(t);
+            }
+            case COORDINATOR -> {
+                Coordinator c = new Coordinator();
+                c.setUser(user);
+                c.setDepartment(dto.department());
+                coordinatorRepo.save(c);
+            }
+            case PARENT -> {
+                Parent p = new Parent();
+                p.setUser(user);
+                p.setPhoneContact(dto.phoneContact());
+                parentRepo.save(p);
 
-        studentRepo.save(student);
+                // Vinculación opcional con un estudiante (por email del estudiante)
+                if (dto.studentEmail() != null && !dto.studentEmail().isBlank()) {
+                    User studentUser = userRepo.findByEmail(dto.studentEmail().trim())
+                            .orElseThrow(() -> new BusinessRuleException("No se encontró un estudiante con ese correo"));
+                    Student student = studentRepo.findByUser_Id(studentUser.getId())
+                            .orElseThrow(() -> new BusinessRuleException("El usuario indicado no es un estudiante"));
+                    if (studentParentRepo.existsByStudent_IdAndParent_Id(student.getId(), p.getId())) {
+                        throw new BusinessRuleException("El familiar ya se encuentra registrado para este estudiante");
+                    }
+                    StudentParent link = new StudentParent();
+                    link.setStudent(student);
+                    link.setParent(p);
+                    link.setRelationship("Familiar");
+                    studentParentRepo.save(link);
+                }
+            }
+        }
 
-        String token = jwt.generate(user);
-
-        return new AuthResponseDTO(
-                token,
-                "Bearer",
-                userMapper.toResponse(user)
-        );
+        String token = jwt.generateToken(new UserPrincipal(user));
+        return new AuthResponseDTO(token, "Bearer", userMapper.toResponse(user), profileIdOf(user));
     }
 
-    public LoginResponseDTO login(LoginRequestDTO dto) {
+    @Transactional
+    public void changePassword(UserPrincipal principal, ChangePasswordRequestDTO dto) {
+        User user = userRepo.findById(principal.getUser().getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
 
-        String email = dto.email().trim().toLowerCase();
+        if (!encoder.matches(dto.currentPassword(), user.getPassword())) {
+            throw new BusinessRuleException("La contraseña actual es incorrecta");
+        }
 
-        User user = userRepo.findByEmail(email)
-                .filter(u -> encoder.matches(
-                        dto.password(),
-                        u.getPassword()
-                ))
-                .orElseThrow(InvalidCredentialsException::new);
+        user.setPassword(encoder.encode(dto.newPassword()));
+        userRepo.save(user);
+    }
 
-        String token = jwt.generate(user);
+    public AuthResponseDTO login(LoginRequestDTO dto) {
+        Authentication authentication = authManager.authenticate(
+                new UsernamePasswordAuthenticationToken(dto.email(), dto.password()));
 
-        return new LoginResponseDTO(
-                token,
-                "Bearer",
-                jwt.expiresInSeconds(),
-                user.getRole().name()
-        );
+        UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
+        String token = jwt.generateToken(principal);
+        return new AuthResponseDTO(token, "Bearer", userMapper.toResponse(principal.getUser()), profileIdOf(principal.getUser()));
+    }
 
+    private Long profileIdOf(User user) {
+        return switch (user.getRole()) {
+            case STUDENT -> studentRepo.findByUser_Id(user.getId()).map(Student::getId).orElse(null);
+            case TEACHER -> teacherRepo.findByUser_Id(user.getId()).map(Teacher::getId).orElse(null);
+            case COORDINATOR -> coordinatorRepo.findByUser_Id(user.getId()).map(Coordinator::getId).orElse(null);
+            case PARENT -> parentRepo.findByUser_Id(user.getId()).map(Parent::getId).orElse(null);
+        };
     }
 }

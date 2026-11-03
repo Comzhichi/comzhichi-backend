@@ -20,8 +20,8 @@ public class LevelEvaluationController {
 
     @GetMapping
     public List<LevelEvaluationResponseDTO> findAll(
-            @RequestParam(required = false) Long studentId) {
-        return evaluationService.findAll(studentId);
+            @RequestParam(required = false) Long enrollmentId) {
+        return evaluationService.findAll(enrollmentId);
     }
 
     @GetMapping("/{id}")

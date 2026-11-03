@@ -20,8 +20,9 @@ public class EnrollmentController {
     private final EnrollmentService enrollmentService;
 
     @GetMapping
-    public List<EnrollmentResponseDTO> findAll(@RequestParam(required = false) Long studentId) {
-        return enrollmentService.findAll(studentId);
+    public List<EnrollmentResponseDTO> findAll(@RequestParam(required = false) Long studentId,
+                                             @RequestParam(required = false) Long sectionId) {
+        return enrollmentService.findAll(studentId, sectionId);
     }
     @GetMapping("/section/{sectionId}")
     public List<EnrollmentResponseDTO> findBySectionId(@PathVariable Long sectionId) {
@@ -44,6 +45,20 @@ public class EnrollmentController {
     @PreAuthorize("hasRole('COORDINATOR')")
     public EnrollmentResponseDTO update(@PathVariable Long id, @Valid @RequestBody EnrollmentRequestDTO dto) {
         return enrollmentService.update(id, dto);
+    }
+
+    @PatchMapping("/{id}/drop")
+    @PreAuthorize("hasRole('COORDINATOR')")
+    public EnrollmentResponseDTO drop(@PathVariable Long id) {
+        return enrollmentService.drop(id);
+    }
+
+    @PatchMapping("/{id}/transfer")
+    @PreAuthorize("hasRole('COORDINATOR')")
+    public EnrollmentResponseDTO transfer(
+            @PathVariable Long id,
+            @RequestParam Long newSectionId) {
+        return enrollmentService.transfer(id, newSectionId);
     }
 
     @DeleteMapping("/{id}")

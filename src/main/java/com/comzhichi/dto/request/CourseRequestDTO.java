@@ -5,14 +5,19 @@ import jakarta.validation.constraints.Size;
 
 public record CourseRequestDTO(
         @NotBlank(message = "El nombre del curso es obligatorio")
-        @Size(max = 100, message = "El nombre no debe exceder los 100 caracteres")
+        @Size(max = 100)
         String name,
 
+        @NotBlank(message = "El idioma es obligatorio")
+        @Size(max = 50)
+        String language,
+
         @NotBlank(message = "El nivel es obligatorio")
-        @Size(max = 50, message = "El nivel no debe exceder los 50 caracteres")
+        @Size(max = 50)
         String level,
 
         String description,
 
-        Long coordinatorId
+        Long coordinatorId,
+        Long prerequisiteId   // nullable
 ) {}

@@ -2,9 +2,12 @@ package com.comzhichi.service;
 
 import com.comzhichi.dto.request.CoordinatorRequestDTO;
 import com.comzhichi.dto.response.CoordinatorResponseDTO;
+import com.comzhichi.exception.BusinessRuleException;
+import com.comzhichi.exception.ConflictException;
 import com.comzhichi.exception.ResourceNotFoundException;
 import com.comzhichi.mapper.CoordinatorMapper;
 import com.comzhichi.model.Coordinator;
+import com.comzhichi.model.Role;
 import com.comzhichi.model.User;
 import com.comzhichi.repository.CoordinatorRepository;
 import com.comzhichi.repository.UserRepository;
@@ -45,10 +48,22 @@ public class CoordinatorService {
         User user = userRepository.findById(dto.userId())
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con ID: " + dto.userId()));
 
+        if (user.getRole() != Role.COORDINATOR)
+            throw new BusinessRuleException("El usuario no tiene rol COORDINATOR");
+        if (coordinatorRepository.existsByUser_Id(user.getId()))
+            throw new ConflictException("El usuario ya tiene un perfil de coordinador");
+
         Coordinator coordinator = coordinatorMapper.toEntity(dto);
         coordinator.setUser(user);
 
         return coordinatorMapper.toResponse(coordinatorRepository.save(coordinator));
+    }
+
+    @Transactional(readOnly = true)
+    public CoordinatorResponseDTO findByUserId(Long userId) {
+        return coordinatorRepository.findByUser_Id(userId)
+                .map(coordinatorMapper::toResponse)
+                .orElseThrow(() -> new ResourceNotFoundException("Perfil de coordinador no encontrado para el usuario: " + userId));
     }
 
     @Transactional

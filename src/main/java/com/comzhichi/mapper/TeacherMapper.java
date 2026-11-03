@@ -10,6 +10,7 @@ import org.mapstruct.Mapping;
 public interface TeacherMapper {
 
     @Mapping(target = "userId", source = "user.id")
+    @Mapping(target = "userFullName", source = "user.fullName")
     @Mapping(target = "userEmail", source = "user.email")
     TeacherResponseDTO toResponse(Teacher teacher);
 

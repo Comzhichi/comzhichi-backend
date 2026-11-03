@@ -10,5 +10,7 @@ import java.util.Optional;
 @Repository
 public interface CoordinatorRepository extends JpaRepository<Coordinator, Long> {
     List<Coordinator> findByDepartmentContainingIgnoreCase(String department);
+
     Optional<Coordinator> findByUser_Id(Long userId);
+    boolean existsByUser_Id(Long userId);
 }

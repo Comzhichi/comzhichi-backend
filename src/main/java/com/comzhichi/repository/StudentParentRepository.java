@@ -10,4 +10,5 @@ import java.util.List;
 public interface StudentParentRepository extends JpaRepository<StudentParent, Long> {
     List<StudentParent> findByStudentId(Long studentId);
     List<StudentParent> findByParentId(Long parentId);
+    boolean existsByStudent_IdAndParent_Id(Long studentId, Long parentId);
 }
