@@ -14,7 +14,7 @@ public class Section {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "group_code", nullable = false, length = 20)
+    @Column(name = "group_code", nullable = false, length = 20, unique = true)
     private String groupCode;
 
     @Column(name = "day_of_week", nullable = false, length = 50)
