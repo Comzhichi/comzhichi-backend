@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.comzhichi</groupId>
     <artifactId>comzhichi-backend</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0.0</version>
     <name>comzhichi-backend</name>
     <description>comzhichi-backend</description>
     <url/>
