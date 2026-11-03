@@ -10,4 +10,5 @@ import java.util.List;
 public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
     List<Enrollment> findByStudentId(Long studentId);
     List<Enrollment> findBySectionId(Long sectionId);
+    List<Enrollment> findByStudent_IdAndSection_IdAndStatus(Long studentId, Long sectionId, com.comzhichi.model.EnrollmentStatus status);
 }

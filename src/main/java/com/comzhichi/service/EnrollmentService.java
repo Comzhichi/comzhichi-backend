@@ -245,6 +245,14 @@ public class EnrollmentService {
         section.setAvailableVacancies(section.getAvailableVacancies() + 1);
         sectionRepository.save(section);
 
+        List<Enrollment> existingDropped = enrollmentRepository
+                .findByStudent_IdAndSection_IdAndStatus(
+                        enrollment.getStudent().getId(), section.getId(), EnrollmentStatus.DROPPED);
+        if (!existingDropped.isEmpty()) {
+            enrollmentRepository.delete(enrollment);
+            return enrollmentMapper.toResponse(existingDropped.get(0));
+        }
+
         enrollment.setStatus(EnrollmentStatus.DROPPED);
         return enrollmentMapper.toResponse(enrollmentRepository.save(enrollment));
     }

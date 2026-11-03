@@ -20,6 +20,12 @@ INSERT INTO users (full_name, email, password, enabled, role) VALUES
 ('Camila Estudiante',   'camila.est@comzhichi.com',   '$2a$10$65tfZ99F/H4rupSPFhqwaenWh7KQE4StRAa4WpxseXJG/IcKW6Ozi', true, 'STUDENT'),
 ('Pedro Estudiante',    'pedro.est@comzhichi.com',    '$2a$10$65tfZ99F/H4rupSPFhqwaenWh7KQE4StRAa4WpxseXJG/IcKW6Ozi', true, 'STUDENT'),
 ('Lucia Estudiante',    'lucia.est@comzhichi.com',    '$2a$10$65tfZ99F/H4rupSPFhqwaenWh7KQE4StRAa4WpxseXJG/IcKW6Ozi', true, 'STUDENT'),
+('Andrea Estudiante',   'andrea.est@comzhichi.com',   '$2a$10$65tfZ99F/H4rupSPFhqwaenWh7KQE4StRAa4WpxseXJG/IcKW6Ozi', true, 'STUDENT'),
+('Jorge Estudiante',    'jorge.est@comzhichi.com',    '$2a$10$65tfZ99F/H4rupSPFhqwaenWh7KQE4StRAa4WpxseXJG/IcKW6Ozi', true, 'STUDENT'),
+('Mariana Estudiante',  'mariana.est@comzhichi.com',  '$2a$10$65tfZ99F/H4rupSPFhqwaenWh7KQE4StRAa4WpxseXJG/IcKW6Ozi', true, 'STUDENT'),
+('Nicolas Estudiante',  'nicolas.est@comzhichi.com',  '$2a$10$65tfZ99F/H4rupSPFhqwaenWh7KQE4StRAa4WpxseXJG/IcKW6Ozi', true, 'STUDENT'),
+('Fernanda Estudiante', 'fernanda.est@comzhichi.com', '$2a$10$65tfZ99F/H4rupSPFhqwaenWh7KQE4StRAa4WpxseXJG/IcKW6Ozi', true, 'STUDENT'),
+('Ricardo Estudiante',  'ricardo.est@comzhichi.com',  '$2a$10$65tfZ99F/H4rupSPFhqwaenWh7KQE4StRAa4WpxseXJG/IcKW6Ozi', true, 'STUDENT'),
 -- Padres
 ('Roberto Padre',       'roberto.padre@comzhichi.com','$2a$10$65tfZ99F/H4rupSPFhqwaenWh7KQE4StRAa4WpxseXJG/IcKW6Ozi', true, 'PARENT'),
 ('Carmen Madre',        'carmen.madre@comzhichi.com', '$2a$10$65tfZ99F/H4rupSPFhqwaenWh7KQE4StRAa4WpxseXJG/IcKW6Ozi', true, 'PARENT'),
@@ -47,7 +53,9 @@ INSERT INTO students (user_id)
 SELECT id FROM users WHERE email IN (
                                      'luis.est@comzhichi.com', 'sofia.est@comzhichi.com', 'diego.est@comzhichi.com',
                                      'valeria.est@comzhichi.com', 'andres.est@comzhichi.com', 'camila.est@comzhichi.com',
-                                     'pedro.est@comzhichi.com', 'lucia.est@comzhichi.com'
+                                     'pedro.est@comzhichi.com', 'lucia.est@comzhichi.com',
+                                     'andrea.est@comzhichi.com', 'jorge.est@comzhichi.com', 'mariana.est@comzhichi.com',
+                                     'nicolas.est@comzhichi.com', 'fernanda.est@comzhichi.com', 'ricardo.est@comzhichi.com'
     ) ON CONFLICT DO NOTHING;
 
 INSERT INTO parents (user_id, phone_contact)
@@ -148,13 +156,13 @@ WHERE name = 'Francés A2';
 
 -- ── SECCIONES ───────────────────────────────────────────
 INSERT INTO sections (group_code, day_of_week, start_time, end_time, classroom, total_vacancies, available_vacancies, course_id, teacher_id)
-SELECT 'ING-A1-A', 'MONDAY,WEDNESDAY', '08:00', '10:00', 'Aula 101', 20, 16,
+SELECT 'ING-A1-A', 'MONDAY,WEDNESDAY', '08:00', '10:00', 'Aula 101', 20, 9,
        (SELECT id FROM courses WHERE name = 'Inglés A1' LIMIT 1),
        (SELECT t.id FROM teachers t JOIN users u ON t.user_id = u.id WHERE u.email = 'carlos.prof@comzhichi.com' LIMIT 1)
 ON CONFLICT DO NOTHING;
 
 INSERT INTO sections (group_code, day_of_week, start_time, end_time, classroom, total_vacancies, available_vacancies, course_id, teacher_id)
-SELECT 'ING-A1-B', 'TUESDAY,THURSDAY', '18:00', '20:00', 'Aula 102', 20, 20,
+SELECT 'ING-A1-B', 'TUESDAY,THURSDAY', '18:00', '20:00', 'Aula 102', 20, 12,
        (SELECT id FROM courses WHERE name = 'Inglés A1' LIMIT 1),
        (SELECT t.id FROM teachers t JOIN users u ON t.user_id = u.id WHERE u.email = 'carlos.prof@comzhichi.com' LIMIT 1)
 ON CONFLICT DO NOTHING;
@@ -172,7 +180,7 @@ SELECT 'ING-B1-A', 'FRIDAY', '14:00', '17:00', 'Aula 103', 15, 15,
 ON CONFLICT DO NOTHING;
 
 INSERT INTO sections (group_code, day_of_week, start_time, end_time, classroom, total_vacancies, available_vacancies, course_id, teacher_id)
-SELECT 'FRN-A1-A', 'TUESDAY,THURSDAY', '08:00', '10:00', 'Aula 201', 20, 19,
+SELECT 'FRN-A1-A', 'TUESDAY,THURSDAY', '08:00', '10:00', 'Aula 201', 20, 12,
        (SELECT id FROM courses WHERE name = 'Francés A1' LIMIT 1),
        (SELECT t.id FROM teachers t JOIN users u ON t.user_id = u.id WHERE u.email = 'maria.prof@comzhichi.com' LIMIT 1)
 ON CONFLICT DO NOTHING;
@@ -184,7 +192,7 @@ SELECT 'FRN-A2-A', 'MONDAY,WEDNESDAY', '14:00', '16:00', 'Aula 202', 20, 20,
 ON CONFLICT DO NOTHING;
 
 INSERT INTO sections (group_code, day_of_week, start_time, end_time, classroom, total_vacancies, available_vacancies, course_id, teacher_id)
-SELECT 'POR-A1-A', 'SATURDAY', '09:00', '12:00', 'Aula 301', 15, 15,
+SELECT 'POR-A1-A', 'SATURDAY', '09:00', '12:00', 'Aula 301', 15, 7,
        (SELECT id FROM courses WHERE name = 'Portugués A1' LIMIT 1),
        (SELECT t.id FROM teachers t JOIN users u ON t.user_id = u.id WHERE u.email = 'luis.prof@comzhichi.com' LIMIT 1)
 ON CONFLICT DO NOTHING;
@@ -256,6 +264,34 @@ SELECT '2026-08-01', 'ACTIVE',
        (SELECT id FROM sections WHERE group_code = 'FRN-A1-A' LIMIT 1)
 ON CONFLICT DO NOTHING;
 
+-- MATRICULAS ADICIONALES (estudiantes nuevos)
+INSERT INTO enrollments (enrollment_date, status, student_id, section_id) SELECT '2026-08-01', 'ACTIVE', (SELECT s.id FROM students s JOIN users u ON s.user_id = u.id WHERE u.email = 'andrea.est@comzhichi.com' LIMIT 1), (SELECT id FROM sections WHERE group_code = 'ING-A1-A' LIMIT 1) ON CONFLICT DO NOTHING;
+INSERT INTO enrollments (enrollment_date, status, student_id, section_id) SELECT '2026-08-01', 'ACTIVE', (SELECT s.id FROM students s JOIN users u ON s.user_id = u.id WHERE u.email = 'jorge.est@comzhichi.com' LIMIT 1), (SELECT id FROM sections WHERE group_code = 'ING-A1-A' LIMIT 1) ON CONFLICT DO NOTHING;
+INSERT INTO enrollments (enrollment_date, status, student_id, section_id) SELECT '2026-08-01', 'ACTIVE', (SELECT s.id FROM students s JOIN users u ON s.user_id = u.id WHERE u.email = 'mariana.est@comzhichi.com' LIMIT 1), (SELECT id FROM sections WHERE group_code = 'ING-A1-A' LIMIT 1) ON CONFLICT DO NOTHING;
+INSERT INTO enrollments (enrollment_date, status, student_id, section_id) SELECT '2026-08-01', 'ACTIVE', (SELECT s.id FROM students s JOIN users u ON s.user_id = u.id WHERE u.email = 'nicolas.est@comzhichi.com' LIMIT 1), (SELECT id FROM sections WHERE group_code = 'ING-A1-A' LIMIT 1) ON CONFLICT DO NOTHING;
+INSERT INTO enrollments (enrollment_date, status, student_id, section_id) SELECT '2026-08-01', 'ACTIVE', (SELECT s.id FROM students s JOIN users u ON s.user_id = u.id WHERE u.email = 'fernanda.est@comzhichi.com' LIMIT 1), (SELECT id FROM sections WHERE group_code = 'ING-A1-A' LIMIT 1) ON CONFLICT DO NOTHING;
+INSERT INTO enrollments (enrollment_date, status, student_id, section_id) SELECT '2026-08-01', 'ACTIVE', (SELECT s.id FROM students s JOIN users u ON s.user_id = u.id WHERE u.email = 'ricardo.est@comzhichi.com' LIMIT 1), (SELECT id FROM sections WHERE group_code = 'ING-A1-A' LIMIT 1) ON CONFLICT DO NOTHING;
+INSERT INTO enrollments (enrollment_date, status, student_id, section_id) SELECT '2026-08-01', 'ACTIVE', (SELECT s.id FROM students s JOIN users u ON s.user_id = u.id WHERE u.email = 'andrea.est@comzhichi.com' LIMIT 1), (SELECT id FROM sections WHERE group_code = 'ING-A1-B' LIMIT 1) ON CONFLICT DO NOTHING;
+INSERT INTO enrollments (enrollment_date, status, student_id, section_id) SELECT '2026-08-01', 'ACTIVE', (SELECT s.id FROM students s JOIN users u ON s.user_id = u.id WHERE u.email = 'jorge.est@comzhichi.com' LIMIT 1), (SELECT id FROM sections WHERE group_code = 'ING-A1-B' LIMIT 1) ON CONFLICT DO NOTHING;
+INSERT INTO enrollments (enrollment_date, status, student_id, section_id) SELECT '2026-08-01', 'ACTIVE', (SELECT s.id FROM students s JOIN users u ON s.user_id = u.id WHERE u.email = 'mariana.est@comzhichi.com' LIMIT 1), (SELECT id FROM sections WHERE group_code = 'ING-A1-B' LIMIT 1) ON CONFLICT DO NOTHING;
+INSERT INTO enrollments (enrollment_date, status, student_id, section_id) SELECT '2026-08-01', 'ACTIVE', (SELECT s.id FROM students s JOIN users u ON s.user_id = u.id WHERE u.email = 'nicolas.est@comzhichi.com' LIMIT 1), (SELECT id FROM sections WHERE group_code = 'ING-A1-B' LIMIT 1) ON CONFLICT DO NOTHING;
+INSERT INTO enrollments (enrollment_date, status, student_id, section_id) SELECT '2026-08-01', 'ACTIVE', (SELECT s.id FROM students s JOIN users u ON s.user_id = u.id WHERE u.email = 'fernanda.est@comzhichi.com' LIMIT 1), (SELECT id FROM sections WHERE group_code = 'ING-A1-B' LIMIT 1) ON CONFLICT DO NOTHING;
+INSERT INTO enrollments (enrollment_date, status, student_id, section_id) SELECT '2026-08-01', 'ACTIVE', (SELECT s.id FROM students s JOIN users u ON s.user_id = u.id WHERE u.email = 'ricardo.est@comzhichi.com' LIMIT 1), (SELECT id FROM sections WHERE group_code = 'ING-A1-B' LIMIT 1) ON CONFLICT DO NOTHING;
+INSERT INTO enrollments (enrollment_date, status, student_id, section_id) SELECT '2026-08-01', 'ACTIVE', (SELECT s.id FROM students s JOIN users u ON s.user_id = u.id WHERE u.email = 'andrea.est@comzhichi.com' LIMIT 1), (SELECT id FROM sections WHERE group_code = 'FRN-A1-A' LIMIT 1) ON CONFLICT DO NOTHING;
+INSERT INTO enrollments (enrollment_date, status, student_id, section_id) SELECT '2026-08-01', 'ACTIVE', (SELECT s.id FROM students s JOIN users u ON s.user_id = u.id WHERE u.email = 'jorge.est@comzhichi.com' LIMIT 1), (SELECT id FROM sections WHERE group_code = 'FRN-A1-A' LIMIT 1) ON CONFLICT DO NOTHING;
+INSERT INTO enrollments (enrollment_date, status, student_id, section_id) SELECT '2026-08-01', 'ACTIVE', (SELECT s.id FROM students s JOIN users u ON s.user_id = u.id WHERE u.email = 'mariana.est@comzhichi.com' LIMIT 1), (SELECT id FROM sections WHERE group_code = 'FRN-A1-A' LIMIT 1) ON CONFLICT DO NOTHING;
+INSERT INTO enrollments (enrollment_date, status, student_id, section_id) SELECT '2026-08-01', 'ACTIVE', (SELECT s.id FROM students s JOIN users u ON s.user_id = u.id WHERE u.email = 'nicolas.est@comzhichi.com' LIMIT 1), (SELECT id FROM sections WHERE group_code = 'FRN-A1-A' LIMIT 1) ON CONFLICT DO NOTHING;
+INSERT INTO enrollments (enrollment_date, status, student_id, section_id) SELECT '2026-08-01', 'ACTIVE', (SELECT s.id FROM students s JOIN users u ON s.user_id = u.id WHERE u.email = 'fernanda.est@comzhichi.com' LIMIT 1), (SELECT id FROM sections WHERE group_code = 'FRN-A1-A' LIMIT 1) ON CONFLICT DO NOTHING;
+INSERT INTO enrollments (enrollment_date, status, student_id, section_id) SELECT '2026-08-01', 'ACTIVE', (SELECT s.id FROM students s JOIN users u ON s.user_id = u.id WHERE u.email = 'ricardo.est@comzhichi.com' LIMIT 1), (SELECT id FROM sections WHERE group_code = 'FRN-A1-A' LIMIT 1) ON CONFLICT DO NOTHING;
+INSERT INTO enrollments (enrollment_date, status, student_id, section_id) SELECT '2026-08-01', 'ACTIVE', (SELECT s.id FROM students s JOIN users u ON s.user_id = u.id WHERE u.email = 'andrea.est@comzhichi.com' LIMIT 1), (SELECT id FROM sections WHERE group_code = 'POR-A1-A' LIMIT 1) ON CONFLICT DO NOTHING;
+INSERT INTO enrollments (enrollment_date, status, student_id, section_id) SELECT '2026-08-01', 'ACTIVE', (SELECT s.id FROM students s JOIN users u ON s.user_id = u.id WHERE u.email = 'jorge.est@comzhichi.com' LIMIT 1), (SELECT id FROM sections WHERE group_code = 'POR-A1-A' LIMIT 1) ON CONFLICT DO NOTHING;
+INSERT INTO enrollments (enrollment_date, status, student_id, section_id) SELECT '2026-08-01', 'ACTIVE', (SELECT s.id FROM students s JOIN users u ON s.user_id = u.id WHERE u.email = 'mariana.est@comzhichi.com' LIMIT 1), (SELECT id FROM sections WHERE group_code = 'POR-A1-A' LIMIT 1) ON CONFLICT DO NOTHING;
+INSERT INTO enrollments (enrollment_date, status, student_id, section_id) SELECT '2026-08-01', 'ACTIVE', (SELECT s.id FROM students s JOIN users u ON s.user_id = u.id WHERE u.email = 'nicolas.est@comzhichi.com' LIMIT 1), (SELECT id FROM sections WHERE group_code = 'POR-A1-A' LIMIT 1) ON CONFLICT DO NOTHING;
+INSERT INTO enrollments (enrollment_date, status, student_id, section_id) SELECT '2026-08-01', 'ACTIVE', (SELECT s.id FROM students s JOIN users u ON s.user_id = u.id WHERE u.email = 'fernanda.est@comzhichi.com' LIMIT 1), (SELECT id FROM sections WHERE group_code = 'POR-A1-A' LIMIT 1) ON CONFLICT DO NOTHING;
+INSERT INTO enrollments (enrollment_date, status, student_id, section_id) SELECT '2026-08-01', 'ACTIVE', (SELECT s.id FROM students s JOIN users u ON s.user_id = u.id WHERE u.email = 'ricardo.est@comzhichi.com' LIMIT 1), (SELECT id FROM sections WHERE group_code = 'POR-A1-A' LIMIT 1) ON CONFLICT DO NOTHING;
+
+INSERT INTO enrollments (enrollment_date, status, student_id, section_id) SELECT '2026-08-01', 'ACTIVE', (SELECT s.id FROM students s JOIN users u ON s.user_id = u.id WHERE u.email = 'andres.est@comzhichi.com' LIMIT 1), (SELECT id FROM sections WHERE group_code = 'ING-A1-B' LIMIT 1) ON CONFLICT DO NOTHING;
+INSERT INTO enrollments (enrollment_date, status, student_id, section_id) SELECT '2026-08-01', 'ACTIVE', (SELECT s.id FROM students s JOIN users u ON s.user_id = u.id WHERE u.email = 'andres.est@comzhichi.com' LIMIT 1), (SELECT id FROM sections WHERE group_code = 'POR-A1-A' LIMIT 1) ON CONFLICT DO NOTHING;
 -- ── ASISTENCIAS ──────────────────────────────────────────
 INSERT INTO attendances (date, status, observation, enrollment_id)
 SELECT '2026-08-05', 'PRESENT', '', e.id
