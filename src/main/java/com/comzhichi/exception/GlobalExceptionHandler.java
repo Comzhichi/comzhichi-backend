@@ -2,6 +2,7 @@ package com.comzhichi.exception;
 
 import com.comzhichi.dto.response.ApiErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
+import tools.jackson.core.JacksonException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -92,6 +93,13 @@ public class GlobalExceptionHandler {
                                 req
                                 );
             }
+
+    // el modelo de IA respondió texto en vez del JSON esperado
+    @ExceptionHandler(JacksonException.class)
+    public ResponseEntity<ApiErrorResponse> handleAiFormat(JacksonException ex, HttpServletRequest req) {
+        return build(HttpStatus.BAD_GATEWAY, "Bad Gateway",
+                "El agente no pudo armar la respuesta, intenta de nuevo", req);
+    }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse> handleGeneric(Exception ex, HttpServletRequest req) {
