@@ -1,7 +1,7 @@
 package com.comzhichi.backend.agent;
 
-import com.comzhichi.backend.agent.dto.ChatRequest;
-import com.comzhichi.backend.agent.dto.ChatResponse;
+import com.comzhichi.dto.request.ChatRequest;
+import com.comzhichi.dto.response.ChatResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
