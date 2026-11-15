@@ -1,23 +1,25 @@
 spring:
+  config:
+    import: optional:file:.env[.properties]
   application:
     name: comzhichi-backend-develop
 
   datasource:
     driver-class-name: org.postgresql.Driver
     # ── Conexión local (activa) ──────────────────────────────────────────────
-    url: jdbc:postgresql://localhost:5432/db_comzhichi
-    username: postgres
-    password: adminadmin
+#    url: jdbc:postgresql://localhost:5432/db_comzhichi
+#    username: postgres
+#    password: adminadmin
+#    hikari:
+#      maximum-pool-size: 5
+#      minimum-idle: 1
+      #     ── Supabase (comentado hasta despliegue en producción) ──────────────────
+    url: jdbc:postgresql://aws-0-us-east-1.pooler.supabase.com:5432/postgres
+    username: postgres.kslokrehwebouzuljdti
+    password: comzhichiadmin
     hikari:
-      maximum-pool-size: 5
+      maximum-pool-size: 3
       minimum-idle: 1
-    # ── Supabase (comentado hasta despliegue en producción) ──────────────────
-    # url: jdbc:postgresql://aws-0-us-east-1.pooler.supabase.com:5432/postgres
-    # username: postgres.kslokrehwebouzuljdti
-    # password: comzhichiadmin
-    # hikari:
-    #   maximum-pool-size: 3
-    #   minimum-idle: 1
 
   jpa:
     database: postgresql
@@ -33,6 +35,17 @@ spring:
     init:
       mode: always
       data-locations: classpath:data.sql
+
+  ai:
+    openai:
+      api-key: ${AI_API_KEY}
+      base-url: https://generativelanguage.googleapis.com/v1beta/openai
+      chat:
+        options:
+          model: gemini-3.8-flash
+          temperature: 0
+          thinking:
+            type: disabled
 
 server:
   port: 8080
