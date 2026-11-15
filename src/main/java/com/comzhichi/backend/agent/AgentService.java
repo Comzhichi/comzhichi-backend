@@ -1,6 +1,6 @@
 package com.comzhichi.backend.agent;
 
-import com.comzhichi.backend.agent.dto.ChatResponse;
+import com.comzhichi.dto.response.ChatResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.memory.ChatMemory;

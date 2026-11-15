@@ -1,4 +1,4 @@
-package com.comzhichi.backend.agent.dto;
+package com.comzhichi.dto.response;
 
 import java.util.List;
 

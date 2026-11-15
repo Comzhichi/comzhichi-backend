@@ -1,7 +1,7 @@
 package com.comzhichi.backend.agent.tools;
 
-import com.comzhichi.backend.agent.dto.ParentReport;
-import com.comzhichi.backend.agent.dto.ParentReportItem;
+import com.comzhichi.dto.response.ParentReport;
+import com.comzhichi.dto.response.ParentReportItem;
 import com.comzhichi.config.CurrentUser;
 import com.comzhichi.model.Attendance;
 import com.comzhichi.model.AttendanceStatus;
