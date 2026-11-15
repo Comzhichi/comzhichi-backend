@@ -1,20 +1,26 @@
 package com.comzhichi.backend.agent.tools;
 
+import com.comzhichi.dto.response.GroupSummary;
 import com.comzhichi.dto.response.ParentReport;
 import com.comzhichi.dto.response.ParentReportItem;
 import com.comzhichi.config.CurrentUser;
+import com.comzhichi.model.AcademicObservation;
 import com.comzhichi.model.Attendance;
 import com.comzhichi.model.AttendanceStatus;
 import com.comzhichi.model.Enrollment;
+import com.comzhichi.model.EnrollmentStatus;
 import com.comzhichi.model.Evaluation;
+import com.comzhichi.model.Section;
 import com.comzhichi.model.LevelEvaluation;
 import com.comzhichi.model.LevelEvaluationResult;
 import com.comzhichi.model.Parent;
 import com.comzhichi.model.Role;
 import com.comzhichi.model.Student;
 import com.comzhichi.model.StudentParent;
+import com.comzhichi.repository.AcademicObservationRepository;
 import com.comzhichi.repository.AttendanceRepository;
 import com.comzhichi.repository.EnrollmentRepository;
+import com.comzhichi.repository.SectionRepository;
 import com.comzhichi.repository.EvaluationRepository;
 import com.comzhichi.repository.LevelEvaluationRepository;
 import com.comzhichi.repository.ParentRepository;
@@ -38,6 +44,8 @@ public class AcademicAgentTools {
     private final AttendanceRepository attendanceRepository;
     private final EvaluationRepository evaluationRepository;
     private final LevelEvaluationRepository levelEvaluationRepository;
+    private final SectionRepository sectionRepository;
+    private final AcademicObservationRepository academicObservationRepository;
 
     // --- US05: Reporte consolidado del familiar ---
 
@@ -144,10 +152,83 @@ public class AcademicAgentTools {
         return "{}";
     }
 
-    @Tool(description = "Devuelve un resumen del desempeño de una sección.")
-    public String getGroupSummary(
-            @ToolParam(description = "Código del grupo o nombre del curso") String groupCode) {
-        return "{}";
+    @Tool(description = """
+            Devuelve un resumen del desempeño de un grupo/sección: matrículas activas,
+            tasa de asistencia, promedio de notas y observaciones registradas.
+            Úsala cuando un docente pida un resumen del desempeño de un grupo.
+            """)
+    public GroupSummary getGroupSummary(
+            @ToolParam(description = "Código del grupo (ej. ING-A1-A) o nombre del curso") String groupCode) {
+        if (groupCode == null || groupCode.isBlank()) {
+            return new GroupSummary("INSUFFICIENT_DATA",
+                    "No se indicó el grupo. Indica el código del grupo (ej. ING-A1-A).",
+                    null, null, null, null, null, 0, 0, 0.0, null, List.of());
+        }
+
+        Section section = sectionRepository.findAll().stream()
+                .filter(s -> s.getGroupCode().equalsIgnoreCase(groupCode.trim()))
+                .findFirst()
+                .orElse(null);
+
+        if (section == null) {
+            return new GroupSummary("INSUFFICIENT_DATA",
+                    "No se encontró el grupo " + groupCode + ".",
+                    null, groupCode, null, null, null, 0, 0, 0.0, null, List.of());
+        }
+
+        List<Enrollment> enrollments = enrollmentRepository.findBySectionId(section.getId());
+        if (enrollments == null || enrollments.isEmpty()) {
+            return new GroupSummary("INSUFFICIENT_DATA",
+                    "No hay estudiantes matriculados en el grupo " + section.getGroupCode() + ".",
+                    section.getId(), section.getGroupCode(), section.getCourse().getName(),
+                    section.getCourse().getLanguage(), section.getCourse().getLevel(),
+                    0, 0, 0.0, null, List.of());
+        }
+
+        int total = enrollments.size();
+        int active = (int) enrollments.stream()
+                .filter(e -> e.getStatus() == EnrollmentStatus.ACTIVE)
+                .count();
+
+        int attTotal = 0;
+        int present = 0;
+        double scoreSum = 0.0;
+        int scoreCount = 0;
+        List<String> observations = new ArrayList<>();
+
+        for (Enrollment e : enrollments) {
+            for (Attendance a : attendanceRepository.findByEnrollmentId(e.getId())) {
+                attTotal++;
+                if (a.getStatus() == AttendanceStatus.PRESENT) {
+                    present++;
+                }
+            }
+            for (Evaluation ev : evaluationRepository.findByEnrollmentId(e.getId())) {
+                scoreSum += ev.getScore();
+                scoreCount++;
+            }
+            for (AcademicObservation o : academicObservationRepository.findByEnrollmentId(e.getId())) {
+                observations.add(o.getObservation());
+            }
+        }
+
+        double attendanceRate = attTotal == 0 ? 0.0 : (present * 100.0 / attTotal);
+        Double avgScore = scoreCount == 0 ? null : scoreSum / scoreCount;
+
+        boolean hasData = attTotal > 0 || scoreCount > 0 || !observations.isEmpty();
+        if (!hasData) {
+            return new GroupSummary("INSUFFICIENT_DATA",
+                    "No existen datos suficientes para generar el resumen del grupo " + section.getGroupCode() + ".",
+                    section.getId(), section.getGroupCode(), section.getCourse().getName(),
+                    section.getCourse().getLanguage(), section.getCourse().getLevel(),
+                    total, active, attendanceRate, avgScore, observations);
+        }
+
+        return new GroupSummary("OK",
+                "Resumen del desempeño del grupo " + section.getGroupCode() + ".",
+                section.getId(), section.getGroupCode(), section.getCourse().getName(),
+                section.getCourse().getLanguage(), section.getCourse().getLevel(),
+                total, active, attendanceRate, avgScore, observations);
     }
 
     @Tool(description = "Matricula al estudiante autenticado en la sección indicada.")
