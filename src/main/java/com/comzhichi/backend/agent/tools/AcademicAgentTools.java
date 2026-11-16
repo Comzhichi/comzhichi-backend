@@ -3,7 +3,10 @@ package com.comzhichi.backend.agent.tools;
 import com.comzhichi.dto.response.GroupSummary;
 import com.comzhichi.dto.response.ParentReport;
 import com.comzhichi.dto.response.ParentReportItem;
+import com.comzhichi.dto.response.SectionSummary;
 import com.comzhichi.config.CurrentUser;
+import com.comzhichi.service.SectionService;
+import org.springframework.security.access.AccessDeniedException;
 import com.comzhichi.model.AcademicObservation;
 import com.comzhichi.model.Attendance;
 import com.comzhichi.model.AttendanceStatus;
@@ -46,6 +49,7 @@ public class AcademicAgentTools {
     private final LevelEvaluationRepository levelEvaluationRepository;
     private final SectionRepository sectionRepository;
     private final AcademicObservationRepository academicObservationRepository;
+    private final SectionService sectionService;
 
     // --- US05: Reporte consolidado del familiar ---
 
@@ -139,12 +143,27 @@ public class AcademicAgentTools {
 
     // --- Stubs de otras tools (pendientes de otras US) ---
 
-    @Tool(description = "Busca secciones de cursos disponibles con vacantes.")
-    public String searchSections(
-            @ToolParam(description = "Idioma del curso", required = false) String language,
-            @ToolParam(description = "Nivel del curso (A1, A2, B1…)", required = false) String level,
-            @ToolParam(description = "Día de la semana", required = false) String dayOfWeek) {
-        return "[]";
+    // US26: el estudiante busca cursos; la regla (vacantes, cruce de horario) vive en SectionService
+    @Tool(description = """
+            Busca secciones de cursos con vacantes disponibles para el estudiante autenticado.
+            Filtra por idioma, nivel o día de la semana, solo si el usuario los menciona.
+            Excluye las secciones que se cruzan con sus matrículas activas.
+            Úsala cuando el usuario pregunte qué cursos u horarios hay.
+            """)
+    public List<SectionSummary> searchSections(
+            @ToolParam(description = "Idioma del curso, solo si el usuario lo menciona", required = false) String language,
+            @ToolParam(description = "Nivel del curso (A1, A2, B1…), solo si el usuario lo menciona", required = false) String level,
+            @ToolParam(description = "Día de la semana en inglés (MONDAY, TUESDAY…), solo si el usuario lo menciona", required = false) String dayOfWeek) {
+        UserPrincipal principal = CurrentUser.getPrincipal();
+        if (principal == null || principal.getUser().getRole() != Role.STUDENT) {
+            throw new AccessDeniedException("Solo un estudiante puede buscar cursos para matricularse");
+        }
+        return sectionService.searchAvailableForUser(principal.getUser().getId(), language, level, dayOfWeek)
+                .stream()
+                .map(s -> new SectionSummary(s.id(), s.groupCode(), s.courseName(), s.courseLevel(),
+                        s.dayOfWeek(), s.startTime(), s.endTime(), s.availableVacancies()))
+                .limit(5)
+                .toList();
     }
 
     @Tool(description = "Devuelve el avance académico del estudiante autenticado por idioma.")
