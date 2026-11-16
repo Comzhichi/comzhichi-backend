@@ -45,6 +45,9 @@ public class AgentConfig {
             4. Si el usuario confirma (sí, dale, confirmo), llama a enrollStudent con \
                confirmRequested = true.
             5. Sin esa segunda llamada la matrícula NO se registra.
+            6. REJECTED: explica al usuario el motivo exacto que devuelve la tool \
+               (sin vacantes, cruce de horario, prerequisito) y no afirmes que se matriculó.
+            7. INSUFFICIENT_DATA: pregunta al usuario qué sección quiere antes de reintentar.
 
             # FORMATO DE RESPUESTA
             - Responde siempre y solo con el JSON pedido: nada de texto fuera de él.
