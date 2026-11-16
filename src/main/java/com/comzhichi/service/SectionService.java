@@ -6,11 +6,17 @@ import com.comzhichi.exception.BusinessRuleException;
 import com.comzhichi.exception.ResourceNotFoundException;
 import com.comzhichi.mapper.SectionMapper;
 import com.comzhichi.model.Course;
+import com.comzhichi.model.Enrollment;
+import com.comzhichi.model.EnrollmentStatus;
 import com.comzhichi.model.Section;
+import com.comzhichi.model.Student;
 import com.comzhichi.model.Teacher;
 import com.comzhichi.repository.CourseRepository;
+import com.comzhichi.repository.EnrollmentRepository;
 import com.comzhichi.repository.SectionRepository;
+import com.comzhichi.repository.StudentRepository;
 import com.comzhichi.repository.TeacherRepository;
+import com.comzhichi.util.ScheduleOverlap;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +36,35 @@ public class SectionService {
     private final CourseRepository courseRepository;
     private final TeacherRepository teacherRepository;
     private final SectionMapper sectionMapper;
+    private final EnrollmentRepository enrollmentRepository;
+    private final StudentRepository studentRepository;
+
+    // US26: secciones con vacantes del idioma/nivel/día pedidos, sin cruce con las matrículas activas
+    @Transactional(readOnly = true)
+    public List<SectionResponseDTO> searchAvailableForUser(Long userId, String language,
+                                                           String level, String dayOfWeek) {
+        Student student = studentRepository.findByUser_Id(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Estudiante no encontrado para el usuario " + userId));
+
+        List<Section> activeSections = enrollmentRepository.findByStudentId(student.getId()).stream()
+                .filter(e -> EnrollmentStatus.ACTIVE.equals(e.getStatus()))
+                .map(Enrollment::getSection)
+                .toList();
+
+        return sectionRepository.findAll().stream()
+                .filter(s -> s.getAvailableVacancies() != null && s.getAvailableVacancies() > 0)
+                .filter(s -> contains(s.getCourse().getLanguage(), language))
+                .filter(s -> contains(s.getCourse().getLevel(), level))
+                .filter(s -> contains(s.getDayOfWeek(), dayOfWeek))
+                .filter(s -> activeSections.stream().noneMatch(a -> ScheduleOverlap.overlap(s, a)))
+                .map(sectionMapper::toResponse)
+                .toList();
+    }
+
+    private boolean contains(String value, String filter) {
+        return filter == null || filter.isBlank()
+                || (value != null && value.toLowerCase().contains(filter.toLowerCase()));
+    }
 
     @Transactional(readOnly = true)
     public List<SectionResponseDTO> findAll(Long courseId, Boolean available, String dayOfWeek) {
