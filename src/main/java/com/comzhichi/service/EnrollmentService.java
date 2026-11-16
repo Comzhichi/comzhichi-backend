@@ -209,21 +209,7 @@ public class EnrollmentService {
 
     // --- Lógica de cruce de horarios con dayOfWeek, startTime, endTime ---
     private boolean schedulesOverlap(Section a, Section b) {
-        Set<String> daysA = Arrays.stream(a.getDayOfWeek().split(","))
-                .map(String::trim).map(String::toUpperCase).collect(Collectors.toSet());
-        Set<String> daysB = Arrays.stream(b.getDayOfWeek().split(","))
-                .map(String::trim).map(String::toUpperCase).collect(Collectors.toSet());
-
-        // Si no comparten ningún día, no hay cruce
-        daysA.retainAll(daysB);
-        if (daysA.isEmpty()) return false;
-
-        int startA = timeToMinutes(a.getStartTime());
-        int endA   = timeToMinutes(a.getEndTime());
-        int startB = timeToMinutes(b.getStartTime());
-        int endB   = timeToMinutes(b.getEndTime());
-
-        return startA < endB && startB < endA;
+        return com.comzhichi.util.ScheduleOverlap.overlap(a, b);
     }
 
     private int timeToMinutes(String time) {
