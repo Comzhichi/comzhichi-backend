@@ -1,10 +1,12 @@
 package com.comzhichi.backend.agent.tools;
 
+import com.comzhichi.dto.response.CourseRecommendation;
 import com.comzhichi.dto.response.GroupSummary;
 import com.comzhichi.dto.response.ParentReport;
 import com.comzhichi.dto.response.ParentReportItem;
 import com.comzhichi.dto.response.SectionSummary;
 import com.comzhichi.config.CurrentUser;
+import com.comzhichi.service.LevelRecommendationService;
 import com.comzhichi.service.SectionService;
 import org.springframework.security.access.AccessDeniedException;
 import com.comzhichi.model.AcademicObservation;
@@ -50,6 +52,7 @@ public class AcademicAgentTools {
     private final SectionRepository sectionRepository;
     private final AcademicObservationRepository academicObservationRepository;
     private final SectionService sectionService;
+    private final LevelRecommendationService levelRecommendationService;
 
     // --- US05: Reporte consolidado del familiar ---
 
@@ -169,6 +172,23 @@ public class AcademicAgentTools {
     @Tool(description = "Devuelve el avance académico del estudiante autenticado por idioma.")
     public String getStudentProgress() {
         return "{}";
+    }
+
+    // US27: recomienda el siguiente curso. La regla vive en LevelRecommendationService.
+    @Tool(description = """
+            Recomienda al estudiante autenticado qué curso o nivel llevar a continuación,
+            analizando su historial académico. Devuelve una recomendación por cada idioma
+            que estudia, de forma independiente.
+            Úsala cuando pregunte qué curso le toca, qué sigue, a qué nivel puede pasar
+            o qué le conviene llevar ahora.
+            No la uses para listar la oferta de cursos: para eso está searchSections.
+            """)
+    public List<CourseRecommendation> recommendNextCourse() {
+        UserPrincipal principal = CurrentUser.getPrincipal();
+        if (principal == null || principal.getUser().getRole() != Role.STUDENT) {
+            throw new AccessDeniedException("Solo un estudiante puede pedir una recomendación de curso");
+        }
+        return levelRecommendationService.recommendForUser(principal.getUser().getId());
     }
 
     @Tool(description = """

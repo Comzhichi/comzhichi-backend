@@ -30,6 +30,11 @@ public class AgentConfig {
               disponibles, filtrando por idioma, nivel u horario.
             - getStudentProgress: cuando el estudiante pregunte por su avance, \
               historial o nivel actual por idioma.
+            - recommendNextCourse: cuando el estudiante pregunte qué curso o nivel \
+              le toca llevar después. Devuelve una recomendación por idioma. \
+              Si un idioma viene con INSUFFICIENT_DATA, dilo para ese idioma y no \
+              inventes una recomendación; si viene COMPLETED, avisa que ya terminó \
+              los niveles registrados en ese idioma.
             - getGroupSummary: cuando un docente pida un resumen del desempeño de \
               un grupo o sección.
             - getParentReport: cuando un familiar pida información sobre el avance, \
