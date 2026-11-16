@@ -1,9 +1,16 @@
 package com.comzhichi.backend.agent.tools;
 
+import com.comzhichi.dto.request.EnrollmentRequestDTO;
+import com.comzhichi.dto.response.EnrollmentResponseDTO;
+import com.comzhichi.dto.response.EnrollmentResult;
 import com.comzhichi.dto.response.GroupSummary;
 import com.comzhichi.dto.response.ParentReport;
 import com.comzhichi.dto.response.ParentReportItem;
 import com.comzhichi.config.CurrentUser;
+import com.comzhichi.exception.BusinessRuleException;
+import com.comzhichi.exception.ResourceNotFoundException;
+import com.comzhichi.service.EnrollmentService;
+import org.springframework.security.access.AccessDeniedException;
 import com.comzhichi.model.AcademicObservation;
 import com.comzhichi.model.Attendance;
 import com.comzhichi.model.AttendanceStatus;
@@ -31,6 +38,7 @@ import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -46,6 +54,7 @@ public class AcademicAgentTools {
     private final LevelEvaluationRepository levelEvaluationRepository;
     private final SectionRepository sectionRepository;
     private final AcademicObservationRepository academicObservationRepository;
+    private final EnrollmentService enrollmentService;
 
     // --- US05: Reporte consolidado del familiar ---
 
@@ -231,10 +240,70 @@ public class AcademicAgentTools {
                 total, active, attendanceRate, avgScore, observations);
     }
 
-    @Tool(description = "Matricula al estudiante autenticado en la sección indicada.")
-    public String enrollStudent(
-            @ToolParam(description = "ID de la sección") Long sectionId,
-            @ToolParam(description = "true si el usuario ya confirmó") boolean confirmRequested) {
-        return "{\"status\": \"CONFIRMATION_REQUIRED\"}";
+    // US29: el estudiante matricula por lenguaje natural.
+    // La tool solo orquesta la confirmación; las reglas (vacantes, prerequisito,
+    // cruce de horario) las valida EnrollmentService.create.
+    @Tool(description = """
+            Matricula al estudiante autenticado en una sección.
+            Llámala primero con confirmRequested=false: devuelve los datos de la sección
+            sin matricular, para que se los muestres al usuario y le pidas que confirme.
+            Solo cuando el usuario confirme de forma explícita, vuelve a llamarla con
+            confirmRequested=true para ejecutar la matrícula.
+            Si el usuario no indicó con claridad en qué sección quiere matricularse,
+            usa antes searchSections y pregúntale cuál; nunca inventes un sectionId.
+            """)
+    public EnrollmentResult enrollStudent(
+            @ToolParam(description = "ID de la sección, tomado de searchSections", required = false) Long sectionId,
+            @ToolParam(description = "true solo si el usuario ya confirmó explícitamente esta sección") boolean confirmRequested) {
+
+        UserPrincipal principal = CurrentUser.getPrincipal();
+        if (principal == null || principal.getUser().getRole() != Role.STUDENT) {
+            throw new AccessDeniedException("Solo un estudiante puede matricularse");
+        }
+
+        if (sectionId == null) {
+            return new EnrollmentResult("INSUFFICIENT_DATA",
+                    "No se indicó la sección. Pregunta al usuario en qué sección desea matricularse.",
+                    null, null, null, null, null, null, null, null, null);
+        }
+
+        Section section = sectionRepository.findById(sectionId).orElse(null);
+        if (section == null) {
+            return new EnrollmentResult("REJECTED",
+                    "No existe la sección indicada.",
+                    sectionId, null, null, null, null, null, null, null, null);
+        }
+
+        if (!confirmRequested) {
+            return new EnrollmentResult("CONFIRMATION_REQUIRED",
+                    "Muestra estos datos al usuario y pídele que confirme antes de matricular.",
+                    section.getId(), section.getGroupCode(),
+                    section.getCourse().getName(), section.getCourse().getLevel(),
+                    section.getDayOfWeek(), section.getStartTime(), section.getEndTime(),
+                    section.getAvailableVacancies(), null);
+        }
+
+        try {
+            // studentId va en null a propósito: para un STUDENT, el servicio lo
+            // reemplaza por el del token y así se evita la suplantación.
+            EnrollmentResponseDTO created = enrollmentService.create(new EnrollmentRequestDTO(
+                    null, sectionId, LocalDate.now(), EnrollmentStatus.ACTIVE));
+
+            return new EnrollmentResult("OK",
+                    "Matrícula registrada.",
+                    created.sectionId(), created.sectionGroupCode(),
+                    created.courseName(), section.getCourse().getLevel(),
+                    created.sectionDayOfWeek(), created.sectionStartTime(), created.sectionEndTime(),
+                    section.getAvailableVacancies(), created.id());
+
+        } catch (BusinessRuleException | ResourceNotFoundException ex) {
+            // Vacantes agotadas, prerequisito no aprobado o cruce de horario:
+            // se informa el motivo y no se matricula.
+            return new EnrollmentResult("REJECTED", ex.getMessage(),
+                    section.getId(), section.getGroupCode(),
+                    section.getCourse().getName(), section.getCourse().getLevel(),
+                    section.getDayOfWeek(), section.getStartTime(), section.getEndTime(),
+                    section.getAvailableVacancies(), null);
+        }
     }
 }
