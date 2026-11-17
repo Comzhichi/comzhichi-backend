@@ -425,7 +425,7 @@ WHERE u.email = 'diego.est@comzhichi.com' AND sec.group_code = 'ING-A1-A' AND e.
 -- Limpieza de notificaciones duplicadas acumuladas por reinicios
 DELETE FROM notifications
 WHERE id NOT IN (
-  SELECT MIN(id) FROM notifications GROUP BY user_id, message, created_at
+  SELECT MIN(id) FROM notifications GROUP BY user_id, created_at
 );
 
 INSERT INTO notifications (message, read, created_at, user_id)
@@ -434,7 +434,7 @@ SELECT 'Resultado de evaluación de nivel: APPROVED', false, '2026-07-15 10:00:0
 WHERE NOT EXISTS (
   SELECT 1 FROM notifications n
   WHERE n.user_id = (SELECT id FROM users WHERE email = 'luis.est@comzhichi.com' LIMIT 1)
-    AND n.message = 'Resultado de evaluaci��n de nivel: APPROVED'
+    AND n.message = 'Resultado de evaluación de nivel: APPROVED'
     AND n.created_at = '2026-07-15 10:00:00'
 );
 
@@ -444,7 +444,7 @@ SELECT 'Resultado académico de su familiar: APPROVED', false, '2026-07-15 10:00
 WHERE NOT EXISTS (
   SELECT 1 FROM notifications n
   WHERE n.user_id = (SELECT id FROM users WHERE email = 'roberto.padre@comzhichi.com' LIMIT 1)
-    AND n.message = 'Resultado acadǸmico de su familiar: APPROVED'
+    AND n.message = 'Resultado académico de su familiar: APPROVED'
     AND n.created_at = '2026-07-15 10:00:00'
 );
 
@@ -454,7 +454,7 @@ SELECT 'Resultado de evaluación de nivel: APPROVED', false, '2026-07-15 10:00:0
 WHERE NOT EXISTS (
   SELECT 1 FROM notifications n
   WHERE n.user_id = (SELECT id FROM users WHERE email = 'sofia.est@comzhichi.com' LIMIT 1)
-    AND n.message = 'Resultado de evaluaci��n de nivel: APPROVED'
+    AND n.message = 'Resultado de evaluación de nivel: APPROVED'
     AND n.created_at = '2026-07-15 10:00:00'
 );
 
@@ -464,7 +464,7 @@ SELECT 'Resultado académico de su familiar: APPROVED', false, '2026-07-15 10:00
 WHERE NOT EXISTS (
   SELECT 1 FROM notifications n
   WHERE n.user_id = (SELECT id FROM users WHERE email = 'carmen.madre@comzhichi.com' LIMIT 1)
-    AND n.message = 'Resultado acadǸmico de su familiar: APPROVED'
+    AND n.message = 'Resultado académico de su familiar: APPROVED'
     AND n.created_at = '2026-07-15 10:00:00'
 );
 
@@ -474,7 +474,7 @@ SELECT 'Resultado de evaluación de nivel: FAILED', false, '2026-07-15 10:00:00'
 WHERE NOT EXISTS (
   SELECT 1 FROM notifications n
   WHERE n.user_id = (SELECT id FROM users WHERE email = 'diego.est@comzhichi.com' LIMIT 1)
-    AND n.message = 'Resultado de evaluaci��n de nivel: FAILED'
+    AND n.message = 'Resultado de evaluación de nivel: FAILED'
     AND n.created_at = '2026-07-15 10:00:00'
 );
 
