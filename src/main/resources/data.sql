@@ -160,6 +160,21 @@ WHERE name = 'Inglés B1';
 UPDATE courses SET prerequisite_id = (SELECT id FROM courses WHERE name = 'Francés A1' ORDER BY id ASC LIMIT 1)
 WHERE name = 'Francés A2';
 
+-- ── LIMPIEZA DE SECCIONES DUPLICADAS ACUMULADAS POR REINICIOS ─────────
+-- Reasignar matrículas que apunten a secciones duplicadas hacia la primera de cada group_code
+UPDATE enrollments
+SET section_id = (SELECT MIN(s2.id) FROM sections s2
+                  WHERE s2.group_code = (SELECT s.group_code FROM sections s WHERE s.id = enrollments.section_id))
+WHERE section_id NOT IN (SELECT MIN(id) FROM sections GROUP BY group_code);
+
+-- Eliminar secciones duplicadas (mismo group_code), conservando la de menor id
+DELETE FROM sections
+WHERE id NOT IN (SELECT MIN(id) FROM sections GROUP BY group_code);
+
+-- La restricción única de group_code la crea Hibernate (ddl-auto: update);
+-- ON CONFLICT DO NOTHING se apoya en ella. No se añade aquí para evitar
+-- problemas de parseo de scripts por Spring (división por ';').
+
 -- ── SECCIONES ───────────────────────────────────────────
 INSERT INTO sections (group_code, day_of_week, start_time, end_time, classroom, total_vacancies, available_vacancies, course_id, teacher_id)
 SELECT 'ING-A1-A', 'MONDAY,WEDNESDAY', '08:00', '10:00', 'Aula 101', 20, 13,
