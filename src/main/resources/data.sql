@@ -171,15 +171,9 @@ WHERE section_id NOT IN (SELECT MIN(id) FROM sections GROUP BY group_code);
 DELETE FROM sections
 WHERE id NOT IN (SELECT MIN(id) FROM sections GROUP BY group_code);
 
--- Asegurar restricción única en group_code para que ON CONFLICT DO NOTHING funcione
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'sections_group_code_key'
-  ) THEN
-    ALTER TABLE sections ADD CONSTRAINT sections_group_code_key UNIQUE (group_code);
-  END IF;
-END $$;
+-- La restricción única de group_code la crea Hibernate (ddl-auto: update);
+-- ON CONFLICT DO NOTHING se apoya en ella. No se añade aquí para evitar
+-- problemas de parseo de scripts por Spring (división por ';').
 
 -- ── SECCIONES ───────────────────────────────────────────
 INSERT INTO sections (group_code, day_of_week, start_time, end_time, classroom, total_vacancies, available_vacancies, course_id, teacher_id)
