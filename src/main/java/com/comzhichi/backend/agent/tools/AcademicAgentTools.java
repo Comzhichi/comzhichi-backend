@@ -1,11 +1,13 @@
 package com.comzhichi.backend.agent.tools;
 
+import com.comzhichi.dto.request.EnrollmentRequestDTO;
 import com.comzhichi.dto.response.CourseRecommendation;
 import com.comzhichi.dto.response.GroupSummary;
 import com.comzhichi.dto.response.ParentReport;
 import com.comzhichi.dto.response.ParentReportItem;
 import com.comzhichi.dto.response.SectionSummary;
 import com.comzhichi.config.CurrentUser;
+import com.comzhichi.service.EnrollmentService;
 import com.comzhichi.service.LevelRecommendationService;
 import com.comzhichi.service.SectionService;
 import org.springframework.security.access.AccessDeniedException;
@@ -46,6 +48,7 @@ public class AcademicAgentTools {
     private final ParentRepository parentRepository;
     private final StudentParentRepository studentParentRepository;
     private final EnrollmentRepository enrollmentRepository;
+    private final EnrollmentService enrollmentService;
     private final AttendanceRepository attendanceRepository;
     private final EvaluationRepository evaluationRepository;
     private final LevelEvaluationRepository levelEvaluationRepository;
@@ -270,10 +273,61 @@ public class AcademicAgentTools {
                 total, active, attendanceRate, avgScore, observations);
     }
 
-    @Tool(description = "Matricula al estudiante autenticado en la sección indicada.")
+    // US29: Matricula al estudiante autenticado en la sección indicada.
+    @Tool(description = """
+        Matricula al estudiante autenticado en la sección indicada.
+        Con confirmRequested = false muestra el resumen de la sección y pide confirmación
+        (devuelve CONFIRMATION_REQUIRED). Con confirmRequested = true registra la matrícula.
+        Úsala cuando el estudiante pida matricularse en un curso específico.
+        """)
     public String enrollStudent(
-            @ToolParam(description = "ID de la sección") Long sectionId,
-            @ToolParam(description = "true si el usuario ya confirmó") boolean confirmRequested) {
-        return "{\"status\": \"CONFIRMATION_REQUIRED\"}";
+            @ToolParam(description = "ID de la sección en la que el estudiante quiere matricularse")
+            Long sectionId,
+            @ToolParam(description = "true si el usuario ya confirmó la matrícula, false para pedir confirmación")
+            boolean confirmRequested) {
+
+        UserPrincipal principal = CurrentUser.getPrincipal();
+        if (principal == null || principal.getUser().getRole() != Role.STUDENT) {
+            throw new AccessDeniedException("Solo un estudiante puede matricularse");
+        }
+
+        Section section = sectionRepository.findById(sectionId).orElse(null);
+        if (section == null) {
+            return "{\"status\": \"NOT_FOUND\", \"message\": \"No se encontró la sección indicada.\"}";
+        }
+
+        if (section.getAvailableVacancies() <= 0) {
+            return "{\"status\": \"NO_VACANCIES\", \"message\": \"La sección no tiene vacantes disponibles.\"}";
+        }
+
+        if (!confirmRequested) {
+            return String.format(
+                    "{\"status\": \"CONFIRMATION_REQUIRED\", \"sectionId\": %d, \"groupCode\": \"%s\", \"course\": \"%s\", \"level\": \"%s\", \"schedule\": \"%s %s-%s\", \"vacancies\": %d}",
+                    section.getId(),
+                    section.getGroupCode(),
+                    section.getCourse().getName(),
+                    section.getCourse().getLevel(),
+                    section.getDayOfWeek(),
+                    section.getStartTime(),
+                    section.getEndTime(),
+                    section.getAvailableVacancies()
+            );
+        }
+
+        try {
+            EnrollmentRequestDTO dto = new EnrollmentRequestDTO(null, sectionId, java.time.LocalDate.now(), EnrollmentStatus.ACTIVE);
+            enrollmentService.create(dto);
+            return String.format(
+                    "{\"status\": \"ENROLLED\", \"message\": \"Te matriculaste correctamente en %s (%s).\", \"groupCode\": \"%s\"}",
+                    section.getCourse().getName(),
+                    section.getCourse().getLevel(),
+                    section.getGroupCode()
+            );
+        } catch (com.comzhichi.exception.BusinessRuleException ex) {
+            return String.format(
+                    "{\"status\": \"REJECTED\", \"message\": \"%s\"}",
+                    ex.getMessage()
+            );
+        }
     }
 }

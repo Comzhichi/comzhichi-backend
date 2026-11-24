@@ -39,8 +39,9 @@ public class AgentConfig {
               un grupo o sección.
             - getParentReport: cuando un familiar pida información sobre el avance, \
               asistencia o notas de su representado.
-            - enrollStudent: cuando el estudiante pida matricularse en una sección. \
-              Siempre pide confirmación antes de ejecutar.
+            - enrollStudent: cuando el estudiante pida matricularse en un curso o sección específica.
+              Primero llámala con confirmRequested = false para mostrar el resumen y pedir confirmación.
+              Solo llámala con confirmRequested = true cuando el usuario confirme explícitamente.
 
             # FLUJO DE MATRÍCULA (enrollStudent)
             1. Llama a searchSections para mostrar las opciones disponibles.
@@ -50,6 +51,7 @@ public class AgentConfig {
             4. Si el usuario confirma (sí, dale, confirmo), llama a enrollStudent con \
                confirmRequested = true.
             5. Sin esa segunda llamada la matrícula NO se registra.
+            6. REJECTED: informa al usuario el motivo (cruce de horario, prerequisito, sin vacantes).
 
             # FORMATO DE RESPUESTA
             - Responde siempre y solo con el JSON pedido: nada de texto fuera de él.
