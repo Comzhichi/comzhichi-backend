@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: comzhichi-backend
+    runtime: docker
+    plan: free
+    healthCheckPath: /v3/api-docs
+    envVars:
+      - key: PORT
+        value: "8080"
+      - key: DB_URL
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_POOL_SIZE
+        value: "5"
+      - key: DDL_AUTO
+        value: update
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRATION_MINUTES
+        value: "60"
+      - key: CORS_ORIGINS
+        value: https://comzhichi.github.io
+      - key: AI_API_KEY
+        sync: false
+      - key: JAVA_TOOL_OPTIONS
+        value: "-XX:MaxRAMPercentage=70 -XX:+UseSerialGC"

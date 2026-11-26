@@ -2,31 +2,23 @@ spring:
   config:
     import: optional:file:.env[.properties]
   application:
-    name: comzhichi-backend-develop
+    name: comzhichi-backend
 
   datasource:
     driver-class-name: org.postgresql.Driver
-    # ── Conexión local (activa) ──────────────────────────────────────────────
-#    url: jdbc:postgresql://localhost:5432/db_comzhichi
-#    username: postgres
-#    password: adminadmin
-#    hikari:
-#      maximum-pool-size: 5
-#      minimum-idle: 1
-      #     ── Supabase (comentado hasta despliegue en producción) ──────────────────
-    url: jdbc:postgresql://aws-0-us-east-1.pooler.supabase.com:5432/postgres
-    username: postgres.kslokrehwebouzuljdti
-    password: comzhichiadmin
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/db_comzhichi}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:adminadmin}
     hikari:
-      maximum-pool-size: 3
+      maximum-pool-size: ${DB_POOL_SIZE:5}
       minimum-idle: 1
 
   jpa:
     database: postgresql
     defer-datasource-initialization: true # Ejecuta data.sql DESPUÉS de que Hibernate cree las tablas
     hibernate:
-      ddl-auto: update
-    show-sql: true
+      ddl-auto: ${DDL_AUTO:update}
+    show-sql: false
     properties:
       hibernate:
         format_sql: true
@@ -48,11 +40,11 @@ spring:
             type: disabled
 
 server:
-  port: 8080
+  port: ${PORT:8080}
 
 jwt:
-  secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
-  expiration-ms: 86400000
+  secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+  expiration-ms: ${JWT_EXPIRATION_MS:86400000}
 
 springdoc:
   api-docs:
@@ -62,7 +54,7 @@ springdoc:
 
 app:
   cors:
-    allowed-origins: "http://localhost:4200,http://127.0.0.1:4200"
+    allowed-origins: ${CORS_ORIGINS:http://localhost:4200,http://127.0.0.1:4200}
   security:
     jwt-secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
-    jwt-expiration-minutes: 60
+    jwt-expiration-minutes: ${JWT_EXPIRATION_MINUTES:60}
