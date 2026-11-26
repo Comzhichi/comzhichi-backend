@@ -3,7 +3,7 @@ services:
     name: comzhichi-backend
     runtime: docker
     plan: free
-    healthCheckPath: /v3/api-docs
+    healthCheckPath: /api/home
     envVars:
       - key: PORT
         value: "8080"
