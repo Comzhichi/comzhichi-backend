@@ -113,6 +113,27 @@ FROM students s
 WHERE us.email = 'camila.est@comzhichi.com' AND up.email = 'jorge.padre@comzhichi.com'
     ON CONFLICT DO NOTHING;
 
+-- ── LIMPIEZA DE CURSOS DUPLICADOS ACUMULADOS POR REINICIOS ─────────
+-- Reasignar secciones que apunten a cursos duplicados hacia el curso canónico (menor id) con el mismo nombre
+UPDATE sections
+SET course_id = (SELECT MIN(c2.id) FROM courses c2
+                 WHERE c2.name = (SELECT c.name FROM courses c WHERE c.id = sections.course_id))
+WHERE course_id NOT IN (SELECT MIN(id) FROM courses GROUP BY name);
+
+-- Reasignar prerequisitos que apunten a cursos duplicados hacia el curso canónico
+UPDATE courses
+SET prerequisite_id = (SELECT MIN(c2.id) FROM courses c2
+                       WHERE c2.name = (SELECT c.name FROM courses c WHERE c.id = courses.prerequisite_id))
+WHERE prerequisite_id IS NOT NULL
+  AND prerequisite_id NOT IN (SELECT MIN(id) FROM courses GROUP BY name);
+
+-- Eliminar cursos duplicados (mismo name), conservando el de menor id
+DELETE FROM courses
+WHERE id NOT IN (SELECT MIN(id) FROM courses GROUP BY name);
+
+-- Asegurar restricción única sobre name para que ON CONFLICT DO NOTHING funcione en futuros arranques
+CREATE UNIQUE INDEX IF NOT EXISTS ux_courses_name ON courses (name);
+
 -- ── CURSOS ──────────────────────────────────────────────
 INSERT INTO courses (name, language, level, description, coordinator_id)
 SELECT 'Inglés A1', 'Inglés', 'A1', 'Curso introductorio de inglés', c.id
